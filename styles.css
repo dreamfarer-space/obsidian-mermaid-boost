@@ -1,0 +1,418 @@
+/* ==========================================================================
+   Mermaid Boost — Aesthetic Redesign & Smart Compact Sizing for Obsidian
+   ========================================================================== */
+
+/* 1. Kill Obsidian & mermaid-zoom's ugly dark-mode invert(1) filter, while applying theme-specific SVG filters (#mb-wobble, glow, glow-pink, glow-violet) */
+body.mermaid-boost-enabled .mermaid svg,
+body.mermaid-boost-enabled.theme-dark .mermaid svg,
+body.mermaid-boost-enabled .mb-lightbox-overlay svg,
+body.mermaid-boost-enabled.theme-dark .mermaid-zoom-modal-wrapper svg {
+  filter: var(--mb-svg-filter, none) !important;
+  -webkit-filter: var(--mb-svg-filter, none) !important;
+}
+
+/* Suppress duplicate controls from mermaid-zoom when Mermaid Boost is active */
+body.mermaid-boost-enabled .mermaid > .mermaid-zoom-inline-controls,
+body.mermaid-boost-enabled .mermaid > .mermaid-zoom-fullscreen-btn {
+  display: none !important;
+}
+
+/* 2. Card Container (.mermaid-boost-card) — matches HTML reference .card 1:1 */
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: fit-content !important;
+  min-width: 240px !important;
+  max-width: 100% !important;
+  margin: 0.75em auto !important;
+  padding: 14px 14px 10px !important;
+  border-radius: 12px !important;
+  background-color: var(--mb-card-bg, #faf9f5) !important;
+  background-image: var(--mb-card-bg-image, none) !important;
+  background-size: var(--mb-card-bg-size, auto) !important;
+  color: var(--mb-card-fg, #141413) !important;
+  border: 1px solid var(--mb-card-border, rgba(128, 128, 128, 0.3)) !important;
+  box-shadow: none !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease !important;
+  box-sizing: border-box !important;
+}
+
+/* Optional user Dot-grid background when theme has no intrinsic pattern */
+body.mermaid-boost-enabled.mermaid-boost-dot-grid:not([data-mb-has-pattern="true"]) .mermaid.mermaid-boost-card {
+  background-image: radial-gradient(
+    var(--mb-grid-dot, rgba(128, 128, 128, 0.16)) 1.15px,
+    transparent 1.15px
+  ) !important;
+  background-size: 16px 16px !important;
+  background-position: -1px -1px !important;
+}
+
+/* 7-Group Interactive Theme Gallery in Settings Tab */
+.mb-theme-gallery {
+  margin: 10px 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mb-theme-group-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mb-theme-group-btn {
+  padding: 6px 11px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border-radius: 8px;
+  font-size: 12.5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.mb-theme-group-btn.is-active {
+  background: #1c1e21;
+  color: #ffffff;
+  border-color: #1c1e21;
+}
+
+.mb-theme-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+  gap: 10px;
+}
+
+.mb-theme-card {
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1.5px solid rgba(128, 128, 128, 0.3);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.mb-theme-card:hover {
+  transform: translateY(-1px);
+}
+
+.mb-theme-card.is-active {
+  outline: 2.5px solid var(--interactive-accent);
+  outline-offset: 1px;
+}
+
+.mb-theme-card-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.mb-theme-card-title {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.mb-theme-card-note {
+  font-size: 11.5px;
+  opacity: 0.78;
+}
+
+.mb-theme-card-preview {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.mb-theme-card-node {
+  padding: 3px 8px;
+  font-size: 11px;
+  border-style: solid;
+}
+
+/* 3. SVG Sizing & Crisp Typography Override */
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card > svg {
+  display: block !important;
+  margin: 0 auto !important;
+  flex-shrink: 0 !important;
+  height: auto;
+  cursor: zoom-in;
+  font-family: var(--mb-font-family, Inter, -apple-system, BlinkMacSystemFont, sans-serif) !important;
+  transition: width 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+              height 0.18s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card svg text,
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card svg .nodeLabel,
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card svg .edgeLabel,
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card svg .label,
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card svg foreignObject div,
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card svg foreignObject span,
+body.mermaid-boost-enabled .mb-lightbox-overlay svg text,
+body.mermaid-boost-enabled .mb-lightbox-overlay svg .nodeLabel,
+body.mermaid-boost-enabled .mb-lightbox-overlay svg .edgeLabel,
+body.mermaid-boost-enabled .mb-lightbox-overlay svg .label,
+body.mermaid-boost-enabled .mb-lightbox-overlay svg foreignObject div,
+body.mermaid-boost-enabled .mb-lightbox-overlay svg foreignObject span {
+  font-family: var(--mb-font-family, Inter, -apple-system, BlinkMacSystemFont, sans-serif) !important;
+  line-height: 1.42 !important;
+  letter-spacing: 0.01em !important;
+}
+
+/* Prevent foreignObject clipping on multi-line <br> labels */
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card svg foreignObject,
+body.mermaid-boost-enabled .mb-lightbox-overlay svg foreignObject {
+  overflow: visible !important;
+}
+
+/* Smooth transitions on node hover */
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card svg .node rect,
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card svg .node polygon,
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card svg .node circle {
+  transition: filter 0.15s ease, stroke-width 0.15s ease;
+}
+
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card svg .node:hover rect,
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card svg .node:hover polygon {
+  filter: brightness(0.97) drop-shadow(0 3px 6px rgba(15, 23, 42, 0.12));
+}
+
+body.mermaid-boost-enabled.theme-dark .mermaid.mermaid-boost-card svg .node:hover rect,
+body.mermaid-boost-enabled.theme-dark .mermaid.mermaid-boost-card svg .node:hover polygon {
+  filter: brightness(1.1) drop-shadow(0 3px 8px rgba(0, 0, 0, 0.4));
+}
+
+/* 4. Ultra-Tall Diagram Height Collapse & Expand Bar */
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card.is-mb-collapsible:not(.is-mb-expanded) {
+  max-height: var(--mb-collapsed-height, 320px) !important;
+  overflow-y: auto !important;
+  justify-content: flex-start !important;
+  padding-bottom: 42px !important;
+}
+
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card > .mb-expand-bar {
+  position: sticky;
+  bottom: -16px;
+  left: 0;
+  right: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 2px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--mb-card-bg, var(--background-primary-alt)) 55%
+  );
+  z-index: 25;
+}
+
+body.mermaid-boost-enabled .mb-expand-btn {
+  appearance: none;
+  border: 1px solid var(--mb-card-border, rgba(99, 102, 241, 0.3));
+  background: var(--background-primary);
+  color: var(--text-accent);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+  transition: all 0.15s ease;
+}
+
+body.mermaid-boost-enabled .mb-expand-btn:hover {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
+}
+
+/* 5. Floating Micro-Toolbar (.mb-toolbar) */
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card > .mb-toolbar {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 6px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--background-primary) 86%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(128, 128, 128, 0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  opacity: 0;
+  transform: translateY(-2px);
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card:hover > .mb-toolbar,
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card:focus-within > .mb-toolbar {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.mb-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(128, 128, 128, 0.1);
+  user-select: none;
+  white-space: nowrap;
+}
+
+
+
+.mb-icon-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  width: 23px;
+  height: 23px;
+  padding: 3px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.mb-icon-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.mb-icon-btn:hover {
+  background: rgba(128, 128, 128, 0.15);
+  color: var(--text-normal);
+}
+
+.mb-icon-btn.mb-close-btn:hover {
+  background: var(--background-modifier-error);
+  color: var(--text-on-accent);
+}
+
+/* 6. Fullscreen Interactive Lightbox (.mb-lightbox-overlay) */
+.mb-lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  background: color-mix(in srgb, var(--background-primary) 94%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  animation: mb-fade-in 0.15s ease-out;
+}
+
+@keyframes mb-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.mb-lightbox-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+
+.mb-lightbox-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+.mb-lightbox-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mb-lightbox-scale {
+  min-width: 44px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.mb-lightbox-theme-btn {
+  appearance: none;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 6px;
+  transition: all 0.14s ease;
+}
+
+.mb-lightbox-theme-btn:hover {
+  border-color: var(--interactive-accent);
+  color: var(--interactive-accent);
+  background: var(--background-primary-alt);
+}
+
+.mb-lightbox-viewport {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  cursor: grab;
+  background-color: var(--mb-card-bg, var(--background-primary));
+  background-image: radial-gradient(
+    var(--mb-grid-dot, rgba(100, 116, 139, 0.16)) 1.15px,
+    transparent 1.15px
+  );
+  background-size: 18px 18px;
+  transition: background-color 0.2s ease;
+}
+
+body.mermaid-boost-enabled[data-mb-theme="swiss-mono"] .mb-lightbox-viewport {
+  background-image:
+    linear-gradient(to right, var(--mb-grid-dot, rgba(0, 0, 0, 0.08)) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--mb-grid-dot, rgba(0, 0, 0, 0.08)) 1px, transparent 1px) !important;
+  background-size: 20px 20px !important;
+}
+
+.mb-lightbox-viewport.is-dragging {
+  cursor: grabbing;
+}
+
+.mb-lightbox-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}

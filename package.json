@@ -1,0 +1,21 @@
+{
+  "name": "obsidian-mermaid-boost",
+  "version": "1.1.0",
+  "description": "Smart compact sizing, 5 architectural themes (Claude, Notion, Excalidraw, Swiss Monochrome, Custom), interactive zoom/pan, and 3x HD PNG export for Obsidian Mermaid diagrams.",
+  "main": "main.js",
+  "scripts": {
+    "test": "node --test lib.test.js"
+  },
+  "keywords": [
+    "obsidian",
+    "obsidian-plugin",
+    "mermaid",
+    "diagram",
+    "flowchart",
+    "claude",
+    "notion",
+    "excalidraw"
+  ],
+  "author": "LeaningLearner",
+  "license": "MIT"
+}

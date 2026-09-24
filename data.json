@@ -1,0 +1,17 @@
+{
+  "sizePreset": "compact",
+  "baseScale": 0.72,
+  "maxHeight": 320,
+  "maxWidth": 620,
+  "minReadableScale": 0.52,
+  "theme": "claude",
+  "nodeRadius": 12,
+  "multiToneNodes": false,
+  "trimPiePadding": true,
+  "showCardFrame": true,
+  "showDotGrid": false,
+  "showHeaderBar": true,
+  "autoCollapseTall": true,
+  "doubleClickFullscreen": true,
+  "zoomSensitivity": 1
+}
