@@ -196,4 +196,4 @@ node --check lib.test.js
 
 Issues and Pull Requests are welcome! When modifying sizing math or theme definitions in `lib.js`, please run `npm test` to ensure all assertions pass.
 
-Released under the **[MIT License](package.json)**.
+Released under the **[MIT License](LICENSE)**.

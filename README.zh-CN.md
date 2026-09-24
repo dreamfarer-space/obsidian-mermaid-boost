@@ -196,4 +196,4 @@ node --check lib.test.js
 
 欢迎提交 Issue 与 Pull Request！如果修改了 `lib.js` 中的尺寸计算或主题定义，请在提交前运行 `npm test` 确保测试全部通过。
 
-本项目基于 **[MIT License](package.json)** 开源。
+本项目基于 **[MIT License](LICENSE)** 开源。
