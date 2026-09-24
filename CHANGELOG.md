@@ -2,6 +2,18 @@
 
 All notable changes to **Mermaid Boost** (`mermaid-boost`) are documented in this file.
 
+## [1.0.2] - 2026-09-24
+
+### Added
+- Root `LICENSE` file (MIT) matching package metadata.
+- Deterministic `package-lock.json` lockfile for reproducible builds and build verification.
+- Explicit `# Mermaid Boost` top-level H1 heading in documentation to satisfy Obsidian Community Plugin requirements.
+
+### Changed
+- **CSS Architecture**: Completely eliminated all 42 instances of `!important` in `styles.css` using structured selector specificity (`.markdown-rendered .mermaid.mermaid-boost-card`).
+- **Container Flexibility**: Supported non-`div` Mermaid containers (such as `<pre class="mermaid">`) across card styling, dot grids, typography, and collapsible views.
+- Updated documentation badges and release download links to target v1.0.2.
+
 ## [1.0.1] - 2026-09-24
 
 ### Added
