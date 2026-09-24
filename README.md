@@ -4,7 +4,7 @@
 
 <br />
 
-[![Version](https://img.shields.io/badge/version-1.0.1-7c3aed?style=flat-square)](manifest.json)
+[![Version](https://img.shields.io/badge/release-v1.0.1-7c3aed?style=flat-square)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/releases/tag/1.0.1)
 [![Obsidian](https://img.shields.io/badge/Obsidian-%3E%3D1.5.0-483699?style=flat-square&logo=obsidian&logoColor=white)](https://obsidian.md)
 [![Themes](https://img.shields.io/badge/themes-29%20in%207%20groups-c6613f?style=flat-square)](#29-themes-across-7-groups)
 [![CI](https://github.com/dreamfarer-space/obsidian-mermaid-boost/actions/workflows/ci.yml/badge.svg)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/actions/workflows/ci.yml)
@@ -105,7 +105,12 @@ Themes restyle the entire SVG hierarchy—**canvas background, primary/secondary
 
 ## Quick Start & Installation
 
-### Manual Installation
+### Option 1: Install via GitHub Release / BRAT
+
+- **From [GitHub Releases (`v1.0.1`)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/releases/tag/1.0.1)**: Download `mermaid-boost-1.0.1.zip` (or `manifest.json`, `main.js`, and `styles.css`) and extract into `<Vault>/.obsidian/plugins/mermaid-boost/`.
+- **Via [Obsidian BRAT](https://github.com/TfTHacker/obsidian42-brat)**: Add beta plugin repository `dreamfarer-space/obsidian-mermaid-boost` and enable **Mermaid Boost**.
+
+### Option 2: Manual Installation
 
 1. Create the plugin folder inside your Obsidian vault:
    ```text

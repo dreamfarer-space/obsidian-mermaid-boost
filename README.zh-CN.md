@@ -4,7 +4,7 @@
 
 <br />
 
-[![Version](https://img.shields.io/badge/version-1.0.1-7c3aed?style=flat-square)](manifest.json)
+[![Version](https://img.shields.io/badge/release-v1.0.1-7c3aed?style=flat-square)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/releases/tag/1.0.1)
 [![Obsidian](https://img.shields.io/badge/Obsidian-%3E%3D1.5.0-483699?style=flat-square&logo=obsidian&logoColor=white)](https://obsidian.md)
 [![Themes](https://img.shields.io/badge/%E4%B8%BB%E9%A2%98-7%20%E7%BB%84%2029%20%E6%AC%BE-c6613f?style=flat-square)](#7-%E5%A4%A7%E5%88%86%E7%BB%84-29-%E6%AC%BE%E4%B8%BB%E9%A2%98%E4%B8%80%E8%A7%88)
 [![CI](https://github.com/dreamfarer-space/obsidian-mermaid-boost/actions/workflows/ci.yml/badge.svg)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/actions/workflows/ci.yml)
@@ -105,7 +105,12 @@ Mermaid Boost 会将大型图表优雅地收敛到舒适的阅读宽度内，同
 
 ## 快速开始与安装
 
-### 手动安装
+### 方式一：通过 GitHub Release 或 BRAT 安装
+
+- **从 [GitHub Releases (`v1.0.1`)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/releases/tag/1.0.1) 下载**：下载 `mermaid-boost-1.0.1.zip`（或直接下载 `manifest.json`、`main.js`、`styles.css`），解压到 `<Vault>/.obsidian/plugins/mermaid-boost/`。
+- **通过 [Obsidian BRAT](https://github.com/TfTHacker/obsidian42-brat) 安装**：在 BRAT 中添加测试插件仓库 `dreamfarer-space/obsidian-mermaid-boost` 并启用 **Mermaid Boost**。
+
+### 方式二：手动安装
 
 1. 在你的 Obsidian 知识库（Vault）下创建插件目录：
    ```text
