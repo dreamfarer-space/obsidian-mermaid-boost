@@ -1,3 +1,5 @@
+# Mermaid Boost
+
 <div align="center">
 
 <img src="assets/hero-banner.svg" alt="Mermaid Boost — Obsidian Mermaid 智能紧凑缩放、29 款主题与交互式增强插件" width="100%" />
