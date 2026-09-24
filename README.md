@@ -1,199 +1,194 @@
-# Mermaid Boost (`mermaid-boost`)
+<div align="center">
 
-[简体中文](README.zh-CN.md) | English
+<img src="assets/hero-banner.svg" alt="Mermaid Boost — Smart Sizing, 29 Themes & Interactive Controls for Obsidian Mermaid Diagrams" width="100%" />
 
-Mermaid Boost is an Obsidian plugin that makes rendered Mermaid diagrams easier to read, navigate, and export. It adds smart compact sizing, **7 theme groups with 29 themes**, interactive zoom controls, fullscreen pan/zoom, and HD PNG export while keeping standard Mermaid code blocks as the source.
+<br />
 
-- Current version: **1.0.1**
-- Minimum Obsidian version: **1.5.0**
-- Desktop-only: **No**
+[![Version](https://img.shields.io/badge/version-1.0.1-7c3aed?style=flat-square)](manifest.json)
+[![Obsidian](https://img.shields.io/badge/Obsidian-%3E%3D1.5.0-483699?style=flat-square&logo=obsidian&logoColor=white)](https://obsidian.md)
+[![Themes](https://img.shields.io/badge/themes-29%20in%207%20groups-c6613f?style=flat-square)](#29-themes-across-7-groups)
+[![CI](https://github.com/dreamfarer-space/obsidian-mermaid-boost/actions/workflows/ci.yml/badge.svg)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-10b981?style=flat-square)](#license)
+
+**English** · **[简体中文](README.zh-CN.md)**
+
+[Why Mermaid Boost?](#why-mermaid-boost) · [Features](#features) · [29 Themes](#29-themes-across-7-groups) · [Quick Start](#quick-start--installation) · [Settings](#settings-reference) · [Development](#development)
+
+</div>
+
+---
+
+## Why Mermaid Boost?
+
+Mermaid diagrams in Obsidian often suffer from two extremes: sprawling architecture charts either **overflow the reading column** or **shrink to microscopic, unreadable text**.
+
+**Mermaid Boost** enhances Obsidian's rendered Mermaid SVGs on the fly—adding a **readability floor**, **29 handcrafted themes**, **inline zoom controls**, a **double-click pan/zoom lightbox**, and **one-click HD PNG export**—while keeping your note source 100% standard ` ```mermaid ` Markdown.
+
+| Capability | Default Obsidian Mermaid | With **Mermaid Boost** |
+| :--- | :--- | :--- |
+| **Large Diagram Sizing** | Shrinks unconstrained or overflows container | **4 Smart Presets (`S` / `M` / `L` / `1:1`)** with a strict **Minimum Readable Scale** floor |
+| **Tall Flowcharts** | Pushes note content several screens down | **Auto-collapses tall diagrams** cleanly instead of crushing text size |
+| **Visual Styling** | Basic default Mermaid skin | **29 curated themes across 7 groups** (canvas, nodes, clusters, edges, fonts & SVG filters) |
+| **Navigation & Inspection** | Static inline SVG | **Toolbar Zoom (`−` / `72%` / `+`)** + **Double-click Fullscreen Lightbox** with smooth drag-pan |
+| **Sharing & Export** | Manual screenshot at screen DPI | **One-click HD PNG Export** directly from the diagram header |
+| **Markdown Lock-in** | Standard ` ```mermaid ` fence | **100% Standard ` ```mermaid ` fence** — zero proprietary syntax |
+
+---
 
 ## Features
 
-### Smart diagram sizing
+### 1. Smart Diagram Sizing with Readability Floor
 
-Mermaid Boost can scale large diagrams into a practical reading area without shrinking them below a configured readability floor. Four presets are built in:
+Mermaid Boost scales diagrams to fit a comfortable reading area while enforcing a **Minimum Readable Scale** floor so labels never become illegible. Tall diagrams can automatically collapse with an expand toggle rather than shrinking into a thin vertical strip.
 
-| Preset | Base scale | Max width | Max height | Minimum readable scale |
-| --- | ---: | ---: | ---: | ---: |
-| Compact | 72% | 620 px | 320 px | 52% |
-| Balanced | 85% | 740 px | 440 px | 58% |
-| Relaxed | 100% | 900 px | 580 px | 65% |
-| Original | 100% | 1600 px | 2400 px | 100% |
+| Preset | Short | Base Scale | Max Width | Max Height | Min Readable Scale | Best For |
+| :--- | :---: | ---: | ---: | ---: | ---: | :--- |
+| **Compact** *(default)* | `S` | `72%` | `620 px` | `320 px` | **`52%`** | Dense study notes & side-by-side panes |
+| **Balanced** | `M` | `85%` | `740 px` | `440 px` | **`58%`** | Everyday technical documentation |
+| **Relaxed** | `L` | `100%` | `900 px` | `580 px` | **`65%`** | Wide monitors & architecture reviews |
+| **Original** | `1:1` | `100%` | `1600 px` | `2400 px` | **`100%`** | Full 1:1 unconstrained presentation |
 
-Tall diagrams can be collapsed automatically instead of being reduced to an unreadable size.
+### 2. Interactive Controls & Fullscreen Lightbox
 
-### Interactive controls
+Every enhanced diagram card exposes quick controls in its header toolbar:
 
-Enhanced diagrams expose controls for common viewing actions:
+- **Inline Zoom (`−` / `72%` / `+`)** — Adjust diagram scale on the spot or click the percentage badge to reset.
+- **Double-Click Fullscreen Lightbox** — Open any diagram in an interactive overlay with mouse-wheel zoom and click-drag panning.
+- **One-Click HD PNG Export** — Copy or export crisp, high-resolution raster images ready for slides, papers, or chat.
+- **Customizable Frame & Grid** — Toggle the card frame, subtle dot-grid background, header bar, node corner radius, and pie-chart padding trim.
 
-- **Zoom out / reset / zoom in** directly from the diagram toolbar.
-- A scale badge shows the current display scale.
-- **Double-click fullscreen** opens an interactive lightbox for pan and zoom.
-- **HD PNG export** lets you copy/export a high-resolution raster image of the diagram.
-- Zoom sensitivity can be adjusted from the plugin settings.
+---
 
-### 29 themes in 7 groups
+## 29 Themes Across 7 Groups
 
-Themes restyle the diagram canvas, nodes, clusters, notes, edges, labels, fonts, corner radius, and selected decorative effects.
+<div align="center">
+  <img src="assets/theme-gallery.svg" alt="Mermaid Boost 29 Themes Gallery" width="100%" />
+</div>
 
-#### 1. Styled (4)
+<br />
 
-- **`claude` — Claude:** cream canvas, clay accent, serif typography.
-- **`notion` — Notion:** clean white and soft-grey palette.
-- **`notion-dark` — Notion dark:** charcoal background with light text.
-- **`handcrafted` — Handcrafted:** paper/marker look with rounded nodes and wobbly lines.
+Themes restyle the entire SVG hierarchy—**canvas background, primary/secondary nodes, subgraph clusters, notes, edge paths, edge labels, typography, corner radius, and decorative SVG filters** (hand-drawn wobble, neon/CRT glow, blueprint grids, and corkboard textures).
 
-#### 2. Developer (4)
+| Group | Theme ID | Display Name | Palette & Typography | Signature Visual Character |
+| :--- | :--- | :--- | :--- | :--- |
+| **1. Styled** *(4)* | `claude` *(default)* | **Claude** | Cream `#faf9f5` · Clay `#c6613f` · Serif | Warm editorial card with rounded nodes & terracotta accents |
+| | `notion` | **Notion** | Pure White `#ffffff` · Soft Grey `#f7f6f3` · Sans | Clean, understated workspace aesthetic with warm yellow notes |
+| | `notion-dark` | **Notion dark** | Charcoal `#191919` · Slate `#252525` · Sans | Low-glare dark mode workspace styling |
+| | `handcrafted` | **Handcrafted** | Warm Paper `#fdf6e3` · Marker `#fff3b0` · Hand | Sketchbook feel with hand-drawn SVG wobble filter |
+| **2. Developer** *(4)* | `nord` | **Nord** | Polar Night `#2e3440` · Frost `#88c0d0` · Sans | Arctic blue-grey developer palette |
+| | `dracula` | **Dracula** | Dark Slate `#282a36` · Purple `#bd93f9` · Pink `#ff79c6` | High-contrast vampire dark theme with neon pink edges |
+| | `solarized` | **Solarized** | Cream `#fdf6e3` · Teal Blue `#268bd2` · Sans | Ethan Schoonover's precision warm light palette |
+| | `gruvbox` | **Gruvbox** | Retro Dark `#282828` · Amber `#fabd2f` · Sans | Warm earthy retro terminal palette |
+| **3. Paper & Print** *(4)* | `blueprint` | **Blueprint** | Technical Blue `#0b3d91` · Crisp White `#ffffff` · Mono | Drafting table aesthetic with 20px coordinate grid |
+| | `newspaper` | **Newspaper** | Newsprint `#f2efe8` · Press Ink `#111111` · Serif | High-contrast editorial print typography |
+| | `academic` | **Academic** | Pure White `#ffffff` · Greyscale `#333333` · Serif | Computer Modern / Times styling tailored for papers & theses |
+| | `kraft-paper` | **Kraft paper** | Brown Stock `#c9a97a` · Espresso `#4a3520` · Mono | Stamped parcel paper look with warm kraft tones |
+| **4. Retro & Playful** *(5)* | `chalkboard` | **Chalkboard** | Slate Green `#2f3e37` · Chalk `#f5f5f0` · Hand | Classroom chalkboard with wobbly hand-drawn lines |
+| | `terminal-crt` | **Terminal / CRT** | Phosphor Black `#050805` · Green `#33ff66` · Mono | Retro green CRT monitor with phosphor glow filter |
+| | `game-boy` | **Game Boy** | DMG Olive `#9bbc0f` · Deep Green `#0f380f` · Mono | Classic 4-shade handheld LCD palette |
+| | `synthwave` | **Synthwave** | Midnight `#1a0b2e` · Neon Pink `#ff2e97` · Cyan `#00f0ff` | Outrun 80s neon glow with cyan laser connectors |
+| | `sticky-notes` | **Sticky notes** | Corkboard `#c89f6b` · Multi-color Post-its · Hand | Radial cork texture with cycling yellow, pink & mint notes |
+| **5. Brand-Inspired** *(5)* | `github-light` | **GitHub light** | White `#ffffff` · Neutral `#f6f8fa` · Green `#1a7f37` | Familiar GitHub Primer light documentation look |
+| | `github-dark` | **GitHub dark** | Dimmed `#0d1117` · Canvas `#161b22` · Green `#238636` | GitHub Primer dark mode palette |
+| | `linear` | **Linear** | Obsidian `#0b0b0f` · Indigo `#5e6ad2` · Sans | Near-black precision interface with subtle violet glow |
+| | `stripe` | **Stripe** | Crisp White `#ffffff` · Blurple `#635bff` · Cyan `#00d4ff` | FinTech product documentation styling |
+| | `metro-map` | **Metro map** | White `#ffffff` · Bold Station `#111111` · Transit Lines | Thick 6px cycling red/blue/green transit routes & station nodes |
+| **6. Functional** *(3)* | `high-contrast` | **High contrast** | White `#ffffff` · Pure Black `#000000` · Yellow `#ffff00` | 3px heavy borders & maximum legibility |
+| | `colorblind-safe` | **Colorblind-safe** | White `#ffffff` · Okabe-Ito 6-color cycle | Scientifically distinguishable multi-category node palette |
+| | `mono-accent` | **Mono + one accent** | Zinc Grey `#f4f4f5` · Signal Orange `#e8590c` | Muted greyscale baseline that spotlights key nodes in orange |
+| **7. Built-in** *(4)* | `builtin-default` | **default** | Classic Lavender `#ECECFF` · Border `#9370DB` | Standard Mermaid default palette with Boost sizing & controls |
+| | `builtin-neutral` | **neutral** | Neutral Grey `#f4f4f4` · Border `#666666` | Standard Mermaid neutral monochrome palette |
+| | `builtin-dark` | **dark** | Dark Charcoal `#1f2020` · Steel `#81B1DB` | Standard Mermaid dark palette |
+| | `builtin-forest` | **forest** | Forest Mint `#cde498` · Pine `#13540c` | Standard Mermaid forest green palette |
 
-- **`nord` — Nord:** icy blue-grey developer palette.
-- **`dracula` — Dracula:** dark purple with pink accents.
-- **`solarized` — Solarized:** warm beige with teal/blue accents.
-- **`gruvbox` — Gruvbox:** earthy retro dark palette.
+---
 
-#### 3. Paper & print (4)
+## Quick Start & Installation
 
-- **`blueprint` — Blueprint:** technical white-on-blue styling with a grid background.
-- **`newspaper` — Newspaper:** ink-on-newsprint appearance.
-- **`academic` — Academic:** restrained greyscale styling suitable for papers and reports.
-- **`kraft-paper` — Kraft paper:** brown paper stock with stamped-print character.
+### Manual Installation
 
-#### 4. Retro & playful (5)
+1. Create the plugin folder inside your Obsidian vault:
+   ```text
+   <Vault>/.obsidian/plugins/mermaid-boost/
+   ```
+2. Copy these three runtime files from the repository into that folder:
+   - `manifest.json`
+   - `main.js`
+   - `styles.css`
+3. Reload Obsidian (`Ctrl/Cmd + R`).
+4. Navigate to **Settings → Community plugins** and enable **Mermaid Boost**.
 
-- **`chalkboard` — Chalkboard:** chalk-on-green styling with a hand-drawn effect.
-- **`terminal-crt` — Terminal / CRT:** phosphor-green terminal look with glow.
-- **`game-boy` — Game Boy:** four-green retro handheld palette.
-- **`synthwave` — Synthwave:** neon pink/purple styling with glow.
-- **`sticky-notes` — Sticky notes:** cork-board feel with colorful sticky-note nodes.
+> [!NOTE]
+> Requires **Obsidian 1.5.0+**. Works across both desktop and mobile (`isDesktopOnly: false`).
 
-#### 5. Brand-inspired (5)
+### Usage
 
-- **`github-light` — GitHub light:** white/grey palette with green accents.
-- **`github-dark` — GitHub dark:** dimmed dark GitHub-inspired palette.
-- **`linear` — Linear:** near-black interface with violet accents/glow.
-- **`stripe` — Stripe:** clean white and indigo styling.
-- **`metro-map` — Metro map:** bold station nodes and transit-style colored routes.
-
-#### 6. Functional (3)
-
-- **`high-contrast` — High contrast:** black-and-white palette with thicker strokes.
-- **`colorblind-safe` — Colorblind-safe:** Okabe-Ito-inspired multi-color palette.
-- **`mono-accent` — Mono + one accent:** greyscale base with an orange key-path accent.
-
-#### 7. Built-in (4)
-
-- **`builtin-default` — default**
-- **`builtin-neutral` — neutral**
-- **`builtin-dark` — dark**
-- **`builtin-forest` — forest**
-
-## Settings
-
-Mermaid Boost exposes its behavior in **Obsidian Settings → Mermaid Boost**.
-
-| Setting | Default | Purpose |
-| --- | --- | --- |
-| Size preset | `compact` | Selects the Compact, Balanced, Relaxed, or Original sizing profile. |
-| Base scale | `0.72` | Default diagram scale before size constraints are applied. |
-| Max height | `320 px` | Maximum preferred diagram height before scaling/collapsing logic applies. |
-| Max width | `620 px` | Maximum preferred diagram width before scaling logic applies. |
-| Min readable scale | `0.52` | Prevents very large diagrams from being reduced below a readable scale. |
-| Theme | `claude` | Chooses one of the 29 bundled themes. |
-| Node radius | `12` | Controls node corner rounding. |
-| Multi-tone nodes | Off | Enables multiple node tones where supported by the selected theme. |
-| Trim pie padding | On | Reduces unnecessary padding around Mermaid pie charts. |
-| Card frame | On | Shows the styled card/container around a diagram. |
-| Dot grid | Off | Adds the optional diagram-card dot grid. |
-| Header bar | On | Shows the diagram header/toolbar area. |
-| Auto-collapse tall diagrams | On | Collapses diagrams that would otherwise become excessively tall. |
-| Double-click fullscreen | On | Opens the pan/zoom lightbox when a diagram is double-clicked. |
-| Zoom sensitivity | `1.0` | Adjusts interactive zoom behavior. |
-
-Changing a size preset provides a sensible group of sizing values; advanced users can then tune individual values as needed.
-
-## Usage
-
-Use ordinary Mermaid fenced code blocks in your notes:
+Write standard Mermaid fenced code blocks in any note—no custom codeblock syntax needed:
 
 ````markdown
 ```mermaid
 flowchart LR
-    A[Write Mermaid] --> B[Render in Obsidian]
-    B --> C[Mermaid Boost enhances it]
+    A[Write Standard Mermaid] --> B[Obsidian Renders SVG]
+    B --> C[Mermaid Boost Applies Theme & Smart Scale]
+    C --> D[Interactive Zoom, Lightbox & HD PNG]
 ```
 ````
 
-After Mermaid renders the SVG, Mermaid Boost applies the selected sizing, theme, card styling, and interactive controls. Your Mermaid source remains normal Markdown.
+---
 
-## Installation
+## Settings Reference
 
-### Manual installation
+Configure all options under **Obsidian Settings → Mermaid Boost**:
 
-1. Create the plugin directory:
+| Category | Setting | Default | Description |
+| :--- | :--- | :---: | :--- |
+| **Sizing** | **Size preset** | `compact` | Choose `compact` (`S`), `balanced` (`M`), `relaxed` (`L`), or `original` (`1:1`). |
+| | **Base scale** | `0.72` | Initial display scale before container constraints are evaluated. |
+| | **Max width** | `620 px` | Target maximum width before proportional downscaling kicks in. |
+| | **Max height** | `320 px` | Target maximum height before scaling or auto-collapse applies. |
+| | **Min readable scale** | `0.52` | Hard readability floor preventing huge diagrams from shrinking too far. |
+| | **Auto-collapse tall diagrams** | `On` | Collapses overly tall diagrams behind an expand toggle. |
+| **Appearance** | **Theme** | `claude` | Select any of the 29 themes across 7 groups. |
+| | **Node radius** | `12` | Corner rounding radius applied to diagram nodes. |
+| | **Multi-tone nodes** | `Off` | Cycles secondary/accent tones across nodes when supported by the theme. |
+| | **Trim pie padding** | `On` | Strips excessive whitespace around Mermaid `pie` charts. |
+| **Card & UI** | **Card frame** | `On` | Wraps rendered diagrams in a themed card container. |
+| | **Dot grid** | `Off` | Adds a subtle architectural dot-grid pattern to the card background. |
+| | **Header bar** | `On` | Displays the top bar with zoom buttons, scale badge, and PNG export. |
+| **Interaction** | **Double-click fullscreen** | `On` | Opens the interactive pan/zoom lightbox on double-click. |
+| | **Zoom sensitivity** | `1.0` | Fine-tunes wheel and button zoom step responsiveness. |
 
-   ```text
-   <Vault>/.obsidian/plugins/mermaid-boost/
-   ```
-
-2. Copy these files from the repository into that directory:
-
-   - `manifest.json`
-   - `main.js`
-   - `styles.css`
-
-3. Reload Obsidian.
-4. Open **Settings → Community plugins**.
-5. Enable **Mermaid Boost**.
-
-> The plugin manifest currently requires Obsidian **1.5.0 or newer** and does not mark the plugin as desktop-only.
-
-## Compatibility notes
-
-- Mermaid Boost enhances Mermaid diagrams after Obsidian renders them; it does not require a custom Mermaid syntax.
-- Theme styling covers common Mermaid SVG elements such as nodes, clusters, notes, edges, labels, and pie-chart colors. Exact output can still vary with diagram type and the Mermaid version bundled by Obsidian.
-- Very large diagrams are intentionally constrained by the active sizing profile. Use **Original** when you want a near-unconstrained 1:1 presentation.
+---
 
 ## Development
 
-The repository ships the runtime JavaScript directly and has no required build step for normal development checks.
-
-Requirements used by CI:
-
-- Node.js **22**
-
-Run the test suite:
+Mermaid Boost ships zero-build ES/CommonJS runtime JavaScript directly so you can inspect, test, and hack on it immediately.
 
 ```bash
+# Run the Node.js unit test suite (requires Node.js 22+)
 npm test
-```
 
-Useful syntax checks:
-
-```bash
+# Run syntax validation
 node --check main.js
 node --check lib.js
 node --check lib.test.js
 ```
 
-The CI workflow runs JavaScript syntax checks, the existing Node test suite, and basic Obsidian manifest/package validation on pull requests and pushes to `main`.
+### Repository Structure
 
-## Repository structure
+| File | Responsibility |
+| :--- | :--- |
+| `main.js` | Obsidian plugin lifecycle, DOM observer, toolbar controls, lightbox, HD PNG export & settings tab |
+| `lib.js` | Pure sizing engine (`SIZE_PRESETS`), 29 theme palettes (`THEMES`), and SVG beautification pipeline |
+| `lib.test.js` | Automated Node test suite verifying sizing math, theme integrity, and SVG post-processing |
+| `styles.css` | Card containers, toolbar buttons, fullscreen lightbox modal, and theme CSS rules |
+| `manifest.json` | Obsidian plugin manifest metadata (`1.0.1`, `minAppVersion: 1.5.0`) |
+| `assets/` | SVG visual banners and theme showcase graphics used in documentation |
 
-| Path | Purpose |
-| --- | --- |
-| `main.js` | Obsidian plugin runtime, UI controls, settings, and diagram enhancement behavior. |
-| `lib.js` | Core sizing, theme palettes, and SVG beautification logic. |
-| `lib.test.js` | Node-based tests for the shared logic. |
-| `styles.css` | Diagram card, toolbar, lightbox, and theme-related CSS. |
-| `manifest.json` | Obsidian plugin metadata. |
-| `data.json` | Example/current plugin settings data in the repository. |
-| `.github/workflows/ci.yml` | Core CI checks. |
-| `.coderabbit.yaml` | CodeRabbit review configuration. |
+---
 
-## Contributing
+## Contributing & License
 
-Issues and pull requests are welcome. For behavior changes, please keep the documentation and tests aligned with the implementation, and verify that existing Mermaid rendering, sizing, and interaction behavior is not regressed.
+Issues and Pull Requests are welcome! When modifying sizing math or theme definitions in `lib.js`, please run `npm test` to ensure all assertions pass.
 
-## License
-
-The package metadata declares this project under the **MIT** license.
+Released under the **[MIT License](package.json)**.

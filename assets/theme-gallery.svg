@@ -1,0 +1,308 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" width="1200" height="520" role="img" aria-label="Mermaid Boost — 29 Themes Across 7 Curated Groups">
+  <defs>
+    <linearGradient id="gallery-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f111a" />
+      <stop offset="100%" stop-color="#171926" />
+    </linearGradient>
+    <pattern id="g-dots" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="0.9" fill="#ffffff" fill-opacity="0.06" />
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="520" rx="18" fill="url(#gallery-bg)" />
+  <rect width="1200" height="520" rx="18" fill="url(#g-dots)" />
+  <rect x="1" y="1" width="1198" height="518" rx="17" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.2" />
+
+  <!-- Section Header -->
+  <text x="36" y="42" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="20" font-weight="800" fill="#f8fafc">29 Curated Themes Across 7 Visual Groups</text>
+  <text x="455" y="42" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="13.5" fill="#94a3b8">Every theme restyles canvas, nodes, clusters, notes, edges, fonts, corners &amp; SVG filters</text>
+
+  <!-- ==================== ROW 1: GROUP 1 (Styled) + GROUP 2 (Developer) + GROUP 3 (Paper & Print) ==================== -->
+
+  <!-- GROUP 1: Styled (4) -->
+  <g transform="translate(36, 64)">
+    <rect width="364" height="200" rx="12" fill="#181b28" stroke="#ffffff" stroke-opacity="0.08" />
+    <text x="16" y="26" font-family="-apple-system, sans-serif" font-size="12.5" font-weight="700" fill="#e2a88f" letter-spacing="0.5">1. STYLED (4)</text>
+
+    <!-- claude -->
+    <g transform="translate(14, 38)">
+      <rect width="162" height="70" rx="8" fill="#faf9f5" stroke="#c6613f" stroke-width="1.8" />
+      <rect x="12" y="12" width="64" height="24" rx="6" fill="#f0eee6" stroke="#c6613f" stroke-width="1.4" />
+      <text x="44" y="28" text-anchor="middle" font-family="Georgia, serif" font-size="11" font-weight="700" fill="#141413">Claude</text>
+      <rect x="86" y="12" width="64" height="24" rx="6" fill="#f7e3d9" stroke="#c6613f" stroke-width="1.2" />
+      <text x="118" y="28" text-anchor="middle" font-family="Georgia, serif" font-size="10" fill="#141413">Default</text>
+      <text x="12" y="56" font-family="monospace" font-size="10.5" font-weight="700" fill="#5c5b56">claude · serif</text>
+    </g>
+
+    <!-- notion -->
+    <g transform="translate(188, 38)">
+      <rect width="162" height="70" rx="8" fill="#ffffff" stroke="#dfdedb" stroke-width="1.8" />
+      <rect x="12" y="12" width="64" height="24" rx="5" fill="#f7f6f3" stroke="#dfdedb" stroke-width="1.4" />
+      <text x="44" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" font-weight="600" fill="#37352f">Notion</text>
+      <rect x="86" y="12" width="64" height="24" rx="5" fill="#fbf3db" stroke="#e9e0c0" stroke-width="1.4" />
+      <text x="118" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10" fill="#37352f">Note</text>
+      <text x="12" y="56" font-family="monospace" font-size="10.5" font-weight="700" fill="#787774">notion · clean</text>
+    </g>
+
+    <!-- notion-dark -->
+    <g transform="translate(14, 118)">
+      <rect width="162" height="70" rx="8" fill="#191919" stroke="#3b3b3b" stroke-width="1.8" />
+      <rect x="12" y="12" width="66" height="24" rx="5" fill="#252525" stroke="#3b3b3b" stroke-width="1.4" />
+      <text x="45" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10.5" font-weight="600" fill="#e6e6e6">Notion Dark</text>
+      <rect x="86" y="12" width="64" height="24" rx="5" fill="#3a3320" stroke="#5a4f2c" stroke-width="1.4" />
+      <text x="118" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10" fill="#f0e6c8">Charcoal</text>
+      <text x="12" y="56" font-family="monospace" font-size="10.5" font-weight="700" fill="#9b9a97">notion-dark</text>
+    </g>
+
+    <!-- handcrafted -->
+    <g transform="translate(188, 118)">
+      <rect width="162" height="70" rx="8" fill="#fdf6e3" stroke="#2b2b2b" stroke-width="1.8" />
+      <rect x="12" y="12" width="66" height="24" rx="8" fill="#fff3b0" stroke="#2b2b2b" stroke-width="1.5" />
+      <text x="45" y="28" text-anchor="middle" font-family="'Comic Sans MS', cursive, sans-serif" font-size="10.5" font-weight="700" fill="#2b2b2b">Handcraft</text>
+      <rect x="86" y="12" width="64" height="24" rx="8" fill="#cdeac0" stroke="#2b2b2b" stroke-width="1.5" />
+      <text x="118" y="28" text-anchor="middle" font-family="'Comic Sans MS', cursive, sans-serif" font-size="10" fill="#2b2b2b">Wobble</text>
+      <text x="12" y="56" font-family="monospace" font-size="10.5" font-weight="700" fill="#5c5649">handcrafted</text>
+    </g>
+  </g>
+
+  <!-- GROUP 2: Developer (4) -->
+  <g transform="translate(418, 64)">
+    <rect width="364" height="200" rx="12" fill="#181b28" stroke="#ffffff" stroke-opacity="0.08" />
+    <text x="16" y="26" font-family="-apple-system, sans-serif" font-size="12.5" font-weight="700" fill="#88c0d0" letter-spacing="0.5">2. DEVELOPER (4)</text>
+
+    <!-- nord -->
+    <g transform="translate(14, 38)">
+      <rect width="162" height="70" rx="8" fill="#2e3440" stroke="#88c0d0" stroke-width="1.6" />
+      <rect x="12" y="12" width="64" height="24" rx="5" fill="#3b4252" stroke="#88c0d0" stroke-width="1.4" />
+      <text x="44" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" fill="#eceff4">Nord</text>
+      <rect x="86" y="12" width="64" height="24" rx="5" fill="#4c566a" stroke="#81a1c1" stroke-width="1.4" />
+      <text x="118" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10" fill="#eceff4">Frost</text>
+      <text x="12" y="56" font-family="monospace" font-size="10.5" font-weight="700" fill="#88c0d0">nord · icy-blue</text>
+    </g>
+
+    <!-- dracula -->
+    <g transform="translate(188, 38)">
+      <rect width="162" height="70" rx="8" fill="#282a36" stroke="#bd93f9" stroke-width="1.6" />
+      <rect x="12" y="12" width="64" height="24" rx="5" fill="#44475a" stroke="#bd93f9" stroke-width="1.4" />
+      <text x="44" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" fill="#f8f8f2">Dracula</text>
+      <rect x="86" y="12" width="64" height="24" rx="5" fill="#3a3c4e" stroke="#ff79c6" stroke-width="1.4" />
+      <text x="118" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10" fill="#ff79c6">Pink</text>
+      <text x="12" y="56" font-family="monospace" font-size="10.5" font-weight="700" fill="#bd93f9">dracula · purple</text>
+    </g>
+
+    <!-- solarized -->
+    <g transform="translate(14, 118)">
+      <rect width="162" height="70" rx="8" fill="#fdf6e3" stroke="#268bd2" stroke-width="1.6" />
+      <rect x="12" y="12" width="64" height="24" rx="5" fill="#eee8d5" stroke="#268bd2" stroke-width="1.4" />
+      <text x="44" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" fill="#586e75">Solarized</text>
+      <rect x="86" y="12" width="64" height="24" rx="5" fill="#f5e9c0" stroke="#b58900" stroke-width="1.4" />
+      <text x="118" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10" fill="#586e75">Warm</text>
+      <text x="12" y="56" font-family="monospace" font-size="10.5" font-weight="700" fill="#268bd2">solarized</text>
+    </g>
+
+    <!-- gruvbox -->
+    <g transform="translate(188, 118)">
+      <rect width="162" height="70" rx="8" fill="#282828" stroke="#fabd2f" stroke-width="1.6" />
+      <rect x="12" y="12" width="64" height="24" rx="5" fill="#3c3836" stroke="#fabd2f" stroke-width="1.4" />
+      <text x="44" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" fill="#ebdbb2">Gruvbox</text>
+      <rect x="86" y="12" width="64" height="24" rx="5" fill="#504945" stroke="#d79921" stroke-width="1.4" />
+      <text x="118" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10" fill="#fabd2f">Retro</text>
+      <text x="12" y="56" font-family="monospace" font-size="10.5" font-weight="700" fill="#fabd2f">gruvbox · earthy</text>
+    </g>
+  </g>
+
+  <!-- GROUP 3: Paper & Print (4) -->
+  <g transform="translate(800, 64)">
+    <rect width="364" height="200" rx="12" fill="#181b28" stroke="#ffffff" stroke-opacity="0.08" />
+    <text x="16" y="26" font-family="-apple-system, sans-serif" font-size="12.5" font-weight="700" fill="#93c5fd" letter-spacing="0.5">3. PAPER &amp; PRINT (4)</text>
+
+    <!-- blueprint -->
+    <g transform="translate(14, 38)">
+      <rect width="162" height="70" rx="8" fill="#0b3d91" stroke="#ffffff" stroke-width="1.5" />
+      <rect x="12" y="12" width="66" height="24" fill="#0e4aa8" stroke="#ffffff" stroke-width="1.3" />
+      <text x="45" y="28" text-anchor="middle" font-family="monospace" font-size="10.5" font-weight="700" fill="#ffffff">Blueprint</text>
+      <rect x="86" y="12" width="64" height="24" fill="#1156bd" stroke="#cfe3ff" stroke-width="1.3" />
+      <text x="118" y="28" text-anchor="middle" font-family="monospace" font-size="10" fill="#ffffff">GRID</text>
+      <text x="12" y="56" font-family="monospace" font-size="10.5" font-weight="700" fill="#cfe3ff">blueprint</text>
+    </g>
+
+    <!-- newspaper -->
+    <g transform="translate(188, 38)">
+      <rect width="162" height="70" rx="8" fill="#f2efe8" stroke="#111111" stroke-width="1.6" />
+      <rect x="12" y="12" width="66" height="24" fill="#f2efe8" stroke="#111111" stroke-width="1.4" />
+      <text x="45" y="28" text-anchor="middle" font-family="Georgia, serif" font-size="10.5" font-weight="700" fill="#111111">Newspaper</text>
+      <rect x="86" y="12" width="64" height="24" fill="#e4e0d6" stroke="#111111" stroke-width="1.4" />
+      <text x="118" y="28" text-anchor="middle" font-family="Georgia, serif" font-size="10" fill="#111111">Press</text>
+      <text x="12" y="56" font-family="monospace" font-size="10.5" font-weight="700" fill="#333333">newspaper</text>
+    </g>
+
+    <!-- academic -->
+    <g transform="translate(14, 118)">
+      <rect width="162" height="70" rx="8" fill="#ffffff" stroke="#333333" stroke-width="1.6" />
+      <rect x="12" y="12" width="66" height="24" fill="#efefef" stroke="#333333" stroke-width="1.4" />
+      <text x="45" y="28" text-anchor="middle" font-family="'Times New Roman', serif" font-size="11" font-weight="700" fill="#000000">Academic</text>
+      <rect x="86" y="12" width="64" height="24" fill="#dddddd" stroke="#555555" stroke-width="1.4" />
+      <text x="118" y="28" text-anchor="middle" font-family="'Times New Roman', serif" font-size="10" fill="#000000">Paper</text>
+      <text x="12" y="56" font-family="monospace" font-size="10.5" font-weight="700" fill="#444444">academic</text>
+    </g>
+
+    <!-- kraft-paper -->
+    <g transform="translate(188, 118)">
+      <rect width="162" height="70" rx="8" fill="#c9a97a" stroke="#4a3520" stroke-width="1.6" />
+      <rect x="12" y="12" width="66" height="24" rx="5" fill="#e2c99b" stroke="#4a3520" stroke-width="1.4" />
+      <text x="45" y="28" text-anchor="middle" font-family="monospace" font-size="10.5" font-weight="700" fill="#3b2a1a">Kraft</text>
+      <rect x="86" y="12" width="64" height="24" rx="5" fill="#ead7ae" stroke="#4a3520" stroke-width="1.4" />
+      <text x="118" y="28" text-anchor="middle" font-family="monospace" font-size="10" fill="#3b2a1a">Stamp</text>
+      <text x="12" y="56" font-family="monospace" font-size="10.5" font-weight="700" fill="#3b2a1a">kraft-paper</text>
+    </g>
+  </g>
+
+  <!-- ==================== ROW 2: GROUP 4 (Retro) + GROUP 5 (Brand) + GROUP 6 & 7 (Functional & Built-in) ==================== -->
+
+  <!-- GROUP 4: Retro & Playful (5) -->
+  <g transform="translate(36, 282)">
+    <rect width="364" height="206" rx="12" fill="#181b28" stroke="#ffffff" stroke-opacity="0.08" />
+    <text x="16" y="26" font-family="-apple-system, sans-serif" font-size="12.5" font-weight="700" fill="#ff2e97" letter-spacing="0.5">4. RETRO &amp; PLAYFUL (5)</text>
+
+    <!-- chalkboard -->
+    <g transform="translate(14, 38)">
+      <rect width="106" height="70" rx="8" fill="#2f3e37" stroke="#f5f5f0" stroke-width="1.5" />
+      <rect x="10" y="12" width="86" height="24" rx="6" fill="#38493f" stroke="#f5f5f0" stroke-width="1.3" />
+      <text x="53" y="28" text-anchor="middle" font-family="cursive, sans-serif" font-size="10.5" font-weight="700" fill="#f5f5f0">Chalkboard</text>
+      <text x="10" y="56" font-family="monospace" font-size="9.5" fill="#d1d5db">chalkboard</text>
+    </g>
+
+    <!-- terminal-crt -->
+    <g transform="translate(129, 38)">
+      <rect width="106" height="70" rx="8" fill="#050805" stroke="#33ff66" stroke-width="1.5" />
+      <rect x="10" y="12" width="86" height="24" fill="#0a140a" stroke="#33ff66" stroke-width="1.3" />
+      <text x="53" y="28" text-anchor="middle" font-family="monospace" font-size="10.5" font-weight="700" fill="#33ff66">CRT Glow</text>
+      <text x="10" y="56" font-family="monospace" font-size="9.5" fill="#33ff66">terminal-crt</text>
+    </g>
+
+    <!-- game-boy -->
+    <g transform="translate(244, 38)">
+      <rect width="106" height="70" rx="8" fill="#9bbc0f" stroke="#0f380f" stroke-width="1.6" />
+      <rect x="10" y="12" width="86" height="24" fill="#8bac0f" stroke="#0f380f" stroke-width="1.5" />
+      <text x="53" y="28" text-anchor="middle" font-family="monospace" font-size="10.5" font-weight="700" fill="#0f380f">Game Boy</text>
+      <text x="10" y="56" font-family="monospace" font-size="9.5" font-weight="700" fill="#0f380f">game-boy</text>
+    </g>
+
+    <!-- synthwave -->
+    <g transform="translate(14, 120)">
+      <rect width="162" height="70" rx="8" fill="#1a0b2e" stroke="#ff2e97" stroke-width="1.6" />
+      <rect x="12" y="12" width="66" height="24" rx="5" fill="#2b1055" stroke="#ff2e97" stroke-width="1.4" />
+      <text x="45" y="28" text-anchor="middle" font-family="sans-serif" font-size="10.5" font-weight="700" fill="#f8e8ff">Synthwave</text>
+      <rect x="86" y="12" width="64" height="24" rx="5" fill="#3d1a78" stroke="#00f0ff" stroke-width="1.4" />
+      <text x="118" y="28" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#00f0ff">Neon</text>
+      <text x="12" y="56" font-family="monospace" font-size="10" font-weight="700" fill="#ff2e97">synthwave</text>
+    </g>
+
+    <!-- sticky-notes -->
+    <g transform="translate(188, 120)">
+      <rect width="162" height="70" rx="8" fill="#c89f6b" stroke="#4a3520" stroke-width="1.6" />
+      <rect x="12" y="12" width="44" height="24" fill="#fff176" stroke="#e0c800" stroke-width="1.4" />
+      <rect x="60" y="12" width="44" height="24" fill="#ffb3c7" stroke="#e58fa6" stroke-width="1.4" />
+      <rect x="108" y="12" width="42" height="24" fill="#b9f6a4" stroke="#7ec46a" stroke-width="1.4" />
+      <text x="12" y="56" font-family="monospace" font-size="10" font-weight="700" fill="#2b2b2b">sticky-notes (cork)</text>
+    </g>
+  </g>
+
+  <!-- GROUP 5: Brand-Inspired (5) -->
+  <g transform="translate(418, 282)">
+    <rect width="364" height="206" rx="12" fill="#181b28" stroke="#ffffff" stroke-opacity="0.08" />
+    <text x="16" y="26" font-family="-apple-system, sans-serif" font-size="12.5" font-weight="700" fill="#a5b4fc" letter-spacing="0.5">5. BRAND-INSPIRED (5)</text>
+
+    <!-- github-light -->
+    <g transform="translate(14, 38)">
+      <rect width="106" height="70" rx="8" fill="#ffffff" stroke="#d0d7de" stroke-width="1.5" />
+      <rect x="10" y="12" width="86" height="24" rx="5" fill="#ddf4ff" stroke="#1a7f37" stroke-width="1.3" />
+      <text x="53" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10.5" font-weight="700" fill="#1f2328">GH Light</text>
+      <text x="10" y="56" font-family="monospace" font-size="9.5" fill="#57606a">github-light</text>
+    </g>
+
+    <!-- github-dark -->
+    <g transform="translate(129, 38)">
+      <rect width="106" height="70" rx="8" fill="#0d1117" stroke="#3d444d" stroke-width="1.5" />
+      <rect x="10" y="12" width="86" height="24" rx="5" fill="#161b22" stroke="#238636" stroke-width="1.3" />
+      <text x="53" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10.5" font-weight="700" fill="#e6edf3">GH Dark</text>
+      <text x="10" y="56" font-family="monospace" font-size="9.5" fill="#8b949e">github-dark</text>
+    </g>
+
+    <!-- linear -->
+    <g transform="translate(244, 38)">
+      <rect width="106" height="70" rx="8" fill="#0b0b0f" stroke="#5e6ad2" stroke-width="1.6" />
+      <rect x="10" y="12" width="86" height="24" rx="5" fill="#17171c" stroke="#5e6ad2" stroke-width="1.4" />
+      <text x="53" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10.5" font-weight="700" fill="#f7f8f8">Linear</text>
+      <text x="10" y="56" font-family="monospace" font-size="9.5" fill="#8a8f98">linear</text>
+    </g>
+
+    <!-- stripe -->
+    <g transform="translate(14, 120)">
+      <rect width="162" height="70" rx="8" fill="#ffffff" stroke="#635bff" stroke-width="1.6" />
+      <rect x="12" y="12" width="66" height="24" rx="6" fill="#f6f9fc" stroke="#635bff" stroke-width="1.4" />
+      <text x="45" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10.5" font-weight="700" fill="#0a2540">Stripe</text>
+      <rect x="86" y="12" width="64" height="24" rx="6" fill="#e6fbff" stroke="#00d4ff" stroke-width="1.4" />
+      <text x="118" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10" fill="#0a2540">Indigo</text>
+      <text x="12" y="56" font-family="monospace" font-size="10" font-weight="700" fill="#635bff">stripe</text>
+    </g>
+
+    <!-- metro-map -->
+    <g transform="translate(188, 120)">
+      <rect width="162" height="70" rx="8" fill="#ffffff" stroke="#111111" stroke-width="2" />
+      <line x1="16" y1="24" x2="146" y2="24" stroke="#e63946" stroke-width="4.5" />
+      <line x1="16" y1="36" x2="146" y2="36" stroke="#0057b8" stroke-width="4.5" />
+      <circle cx="46" cy="30" r="7" fill="#ffffff" stroke="#111111" stroke-width="3" />
+      <circle cx="112" cy="30" r="7" fill="#ffffff" stroke="#111111" stroke-width="3" />
+      <text x="12" y="58" font-family="monospace" font-size="10" font-weight="700" fill="#111111">metro-map · transit</text>
+    </g>
+  </g>
+
+  <!-- GROUP 6: Functional (3) & GROUP 7: Built-in (4) -->
+  <g transform="translate(800, 282)">
+    <rect width="364" height="206" rx="12" fill="#181b28" stroke="#ffffff" stroke-opacity="0.08" />
+    <text x="16" y="26" font-family="-apple-system, sans-serif" font-size="12.5" font-weight="700" fill="#6ee7b7" letter-spacing="0.5">6. FUNCTIONAL (3) &amp; 7. BUILT-IN (4)</text>
+
+    <!-- high-contrast -->
+    <g transform="translate(14, 38)">
+      <rect width="106" height="70" rx="8" fill="#ffffff" stroke="#000000" stroke-width="2.5" />
+      <rect x="10" y="12" width="86" height="24" fill="#ffff00" stroke="#000000" stroke-width="2" />
+      <text x="53" y="28" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="800" fill="#000000">High Contrast</text>
+      <text x="10" y="56" font-family="monospace" font-size="9" font-weight="700" fill="#000000">high-contrast</text>
+    </g>
+
+    <!-- colorblind-safe -->
+    <g transform="translate(129, 38)">
+      <rect width="106" height="70" rx="8" fill="#ffffff" stroke="#0072B2" stroke-width="1.8" />
+      <rect x="10" y="12" width="40" height="24" rx="4" fill="#cfe8f7" stroke="#0072B2" stroke-width="1.6" />
+      <rect x="56" y="12" width="40" height="24" rx="4" fill="#fbe3b0" stroke="#E69F00" stroke-width="1.6" />
+      <text x="10" y="56" font-family="monospace" font-size="9" font-weight="700" fill="#0072B2">colorblind-safe</text>
+    </g>
+
+    <!-- mono-accent -->
+    <g transform="translate(244, 38)">
+      <rect width="106" height="70" rx="8" fill="#ffffff" stroke="#a1a1aa" stroke-width="1.6" />
+      <rect x="10" y="12" width="40" height="24" rx="4" fill="#f4f4f5" stroke="#a1a1aa" stroke-width="1.4" />
+      <rect x="56" y="12" width="40" height="24" rx="4" fill="#fff0e6" stroke="#e8590c" stroke-width="1.8" />
+      <text x="10" y="56" font-family="monospace" font-size="9.5" font-weight="700" fill="#e8590c">mono-accent</text>
+    </g>
+
+    <!-- Built-in 4 chips -->
+    <g transform="translate(14, 120)">
+      <rect width="336" height="70" rx="8" fill="#11131d" stroke="#ffffff" stroke-opacity="0.1" />
+      <text x="14" y="22" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" fill="#94a3b8">7. BUILT-IN MERMAID PRESETS (4)</text>
+
+      <rect x="14" y="32" width="74" height="26" rx="5" fill="#ECECFF" stroke="#9370DB" stroke-width="1.2" />
+      <text x="51" y="49" text-anchor="middle" font-family="monospace" font-size="10" font-weight="700" fill="#333333">default</text>
+
+      <rect x="96" y="32" width="74" height="26" rx="5" fill="#f4f4f4" stroke="#666666" stroke-width="1.2" />
+      <text x="133" y="49" text-anchor="middle" font-family="monospace" font-size="10" font-weight="700" fill="#333333">neutral</text>
+
+      <rect x="178" y="32" width="74" height="26" rx="5" fill="#1f2020" stroke="#81B1DB" stroke-width="1.2" />
+      <text x="215" y="49" text-anchor="middle" font-family="monospace" font-size="10" font-weight="700" fill="#ccc">dark</text>
+
+      <rect x="260" y="32" width="64" height="26" rx="5" fill="#cde498" stroke="#13540c" stroke-width="1.2" />
+      <text x="292" y="49" text-anchor="middle" font-family="monospace" font-size="10" font-weight="700" fill="#13540c">forest</text>
+    </g>
+  </g>
+</svg>
