@@ -107,7 +107,7 @@ Mermaid Boost 会将大型图表优雅地收敛到舒适的阅读宽度内，同
 
 ### 方式一：通过 GitHub Release 或 BRAT 安装
 
-- **从 [GitHub Releases (`v1.0.1`)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/releases/tag/1.0.1) 下载**：下载 `mermaid-boost-1.0.1.zip`（或直接下载 `manifest.json`、`main.js`、`styles.css`），解压到 `<Vault>/.obsidian/plugins/mermaid-boost/`。
+- **从 [GitHub Releases (`v1.0.1`)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/releases/tag/1.0.1) 下载**：下载 `mermaid-boost-1.0.1.zip` 并将其中的文件解压到 `<Vault>/.obsidian/plugins/mermaid-boost/`，或单独下载 `manifest.json`、`main.js`、`styles.css` 并复制到该目录。
 - **通过 [Obsidian BRAT](https://github.com/TfTHacker/obsidian42-brat) 安装**：在 BRAT 中添加测试插件仓库 `dreamfarer-space/obsidian-mermaid-boost` 并启用 **Mermaid Boost**。
 
 ### 方式二：手动安装

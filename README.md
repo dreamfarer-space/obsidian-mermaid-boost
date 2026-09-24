@@ -107,7 +107,7 @@ Themes restyle the entire SVG hierarchy—**canvas background, primary/secondary
 
 ### Option 1: Install via GitHub Release / BRAT
 
-- **From [GitHub Releases (`v1.0.1`)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/releases/tag/1.0.1)**: Download `mermaid-boost-1.0.1.zip` (or `manifest.json`, `main.js`, and `styles.css`) and extract into `<Vault>/.obsidian/plugins/mermaid-boost/`.
+- **From [GitHub Releases (`v1.0.1`)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/releases/tag/1.0.1)**: Download `mermaid-boost-1.0.1.zip` and extract its files into `<Vault>/.obsidian/plugins/mermaid-boost/`, or download `manifest.json`, `main.js`, and `styles.css` individually and copy them into that folder.
 - **Via [Obsidian BRAT](https://github.com/TfTHacker/obsidian42-brat)**: Add beta plugin repository `dreamfarer-space/obsidian-mermaid-boost` and enable **Mermaid Boost**.
 
 ### Option 2: Manual Installation
