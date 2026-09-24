@@ -8,7 +8,7 @@
 [![Obsidian](https://img.shields.io/badge/Obsidian-%3E%3D1.5.0-483699?style=flat-square&logo=obsidian&logoColor=white)](https://obsidian.md)
 [![Themes](https://img.shields.io/badge/themes-29%20in%207%20groups-c6613f?style=flat-square)](#29-themes-across-7-groups)
 [![CI](https://github.com/dreamfarer-space/obsidian-mermaid-boost/actions/workflows/ci.yml/badge.svg)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-10b981?style=flat-square)](#license)
+[![License: MIT](https://img.shields.io/badge/License-MIT-10b981?style=flat-square)](#contributing--license)
 
 **English** · **[简体中文](README.zh-CN.md)**
 
