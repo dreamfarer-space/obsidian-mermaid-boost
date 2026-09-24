@@ -1,3 +1,5 @@
+# Mermaid Boost
+
 <div align="center">
 
 <img src="assets/hero-banner.svg" alt="Mermaid Boost — Smart Sizing, 29 Themes & Interactive Controls for Obsidian Mermaid Diagrams" width="100%" />
