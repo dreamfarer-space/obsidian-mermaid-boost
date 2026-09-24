@@ -22,4 +22,4 @@ All notable changes to **Mermaid Boost** (`mermaid-boost`) are documented in thi
   - **Double-Click Fullscreen Lightbox** supporting smooth mouse-wheel zoom and click-drag panning.
 - **Documentation & CI**:
   - Bilingual English (`README.md`) and Simplified Chinese (`README.zh-CN.md`) documentation with custom SVG visual banners (`assets/hero-banner.svg`, `assets/theme-gallery.svg`).
-  - Automated Node.js 22 CI test workflow (`.github/workflows/ci.yml`), release workflow (`.github/workflows/release.yml`), and `versions.json`.
+  - Automated Node.js 22 CI test workflow (`.github/workflows/ci.yml`) and `versions.json`.
