@@ -3,8 +3,8 @@
    ========================================================================== */
 
 /* 1. Kill Obsidian & mermaid-zoom's dark-mode invert(1) filter, while applying theme-specific SVG filters (#mb-wobble, glow, glow-pink, glow-violet) */
-body.mermaid-boost-enabled .markdown-rendered div.mermaid svg,
-body.mermaid-boost-enabled.theme-dark .markdown-rendered div.mermaid svg,
+body.mermaid-boost-enabled .markdown-rendered .mermaid svg,
+body.mermaid-boost-enabled.theme-dark .markdown-rendered .mermaid svg,
 body.mermaid-boost-enabled .mermaid svg,
 body.mermaid-boost-enabled.theme-dark .mermaid svg,
 body.mermaid-boost-enabled .mb-lightbox-overlay svg,
@@ -14,16 +14,16 @@ body.mermaid-boost-enabled.theme-dark .mermaid-zoom-modal-wrapper svg {
 }
 
 /* Suppress duplicate controls from mermaid-zoom when Mermaid Boost is active */
-body.mermaid-boost-enabled .markdown-rendered div.mermaid > .mermaid-zoom-inline-controls,
-body.mermaid-boost-enabled .markdown-rendered div.mermaid > .mermaid-zoom-fullscreen-btn,
+body.mermaid-boost-enabled .markdown-rendered .mermaid > .mermaid-zoom-inline-controls,
+body.mermaid-boost-enabled .markdown-rendered .mermaid > .mermaid-zoom-fullscreen-btn,
 body.mermaid-boost-enabled .mermaid > .mermaid-zoom-inline-controls,
 body.mermaid-boost-enabled .mermaid > .mermaid-zoom-fullscreen-btn {
   display: none;
 }
 
 /* 2. Card Container (.mermaid-boost-card) — matches HTML reference .card 1:1 */
-body.mermaid-boost-enabled .markdown-rendered div.mermaid.mermaid-boost-card,
-body.mermaid-boost-enabled div.mermaid.mermaid-boost-card {
+body.mermaid-boost-enabled .markdown-rendered .mermaid.mermaid-boost-card,
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -48,8 +48,8 @@ body.mermaid-boost-enabled div.mermaid.mermaid-boost-card {
 }
 
 /* Optional user Dot-grid background when theme has no intrinsic pattern */
-body.mermaid-boost-enabled.mermaid-boost-dot-grid:not([data-mb-has-pattern="true"]) .markdown-rendered div.mermaid.mermaid-boost-card,
-body.mermaid-boost-enabled.mermaid-boost-dot-grid:not([data-mb-has-pattern="true"]) div.mermaid.mermaid-boost-card {
+body.mermaid-boost-enabled.mermaid-boost-dot-grid:not([data-mb-has-pattern="true"]) .markdown-rendered .mermaid.mermaid-boost-card,
+body.mermaid-boost-enabled.mermaid-boost-dot-grid:not([data-mb-has-pattern="true"]) .mermaid.mermaid-boost-card {
   background-image: radial-gradient(
     var(--mb-grid-dot, rgba(128, 128, 128, 0.16)) 1.15px,
     transparent 1.15px
@@ -146,8 +146,8 @@ body.mermaid-boost-enabled.mermaid-boost-dot-grid:not([data-mb-has-pattern="true
 }
 
 /* 3. SVG Sizing & Crisp Typography Override */
-body.mermaid-boost-enabled .markdown-rendered div.mermaid.mermaid-boost-card > svg,
-body.mermaid-boost-enabled div.mermaid.mermaid-boost-card > svg {
+body.mermaid-boost-enabled .markdown-rendered .mermaid.mermaid-boost-card > svg,
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card > svg {
   display: block;
   margin: 0 auto;
   flex-shrink: 0;
@@ -158,18 +158,18 @@ body.mermaid-boost-enabled div.mermaid.mermaid-boost-card > svg {
               height 0.18s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-body.mermaid-boost-enabled .markdown-rendered div.mermaid.mermaid-boost-card svg text,
-body.mermaid-boost-enabled .markdown-rendered div.mermaid.mermaid-boost-card svg .nodeLabel,
-body.mermaid-boost-enabled .markdown-rendered div.mermaid.mermaid-boost-card svg .edgeLabel,
-body.mermaid-boost-enabled .markdown-rendered div.mermaid.mermaid-boost-card svg .label,
-body.mermaid-boost-enabled .markdown-rendered div.mermaid.mermaid-boost-card svg foreignObject div,
-body.mermaid-boost-enabled .markdown-rendered div.mermaid.mermaid-boost-card svg foreignObject span,
-body.mermaid-boost-enabled div.mermaid.mermaid-boost-card svg text,
-body.mermaid-boost-enabled div.mermaid.mermaid-boost-card svg .nodeLabel,
-body.mermaid-boost-enabled div.mermaid.mermaid-boost-card svg .edgeLabel,
-body.mermaid-boost-enabled div.mermaid.mermaid-boost-card svg .label,
-body.mermaid-boost-enabled div.mermaid.mermaid-boost-card svg foreignObject div,
-body.mermaid-boost-enabled div.mermaid.mermaid-boost-card svg foreignObject span,
+body.mermaid-boost-enabled .markdown-rendered .mermaid.mermaid-boost-card svg text,
+body.mermaid-boost-enabled .markdown-rendered .mermaid.mermaid-boost-card svg .nodeLabel,
+body.mermaid-boost-enabled .markdown-rendered .mermaid.mermaid-boost-card svg .edgeLabel,
+body.mermaid-boost-enabled .markdown-rendered .mermaid.mermaid-boost-card svg .label,
+body.mermaid-boost-enabled .markdown-rendered .mermaid.mermaid-boost-card svg foreignObject div,
+body.mermaid-boost-enabled .markdown-rendered .mermaid.mermaid-boost-card svg foreignObject span,
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card svg text,
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card svg .nodeLabel,
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card svg .edgeLabel,
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card svg .label,
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card svg foreignObject div,
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card svg foreignObject span,
 body.mermaid-boost-enabled .mb-lightbox-overlay svg text,
 body.mermaid-boost-enabled .mb-lightbox-overlay svg .nodeLabel,
 body.mermaid-boost-enabled .mb-lightbox-overlay svg .edgeLabel,
@@ -182,8 +182,8 @@ body.mermaid-boost-enabled .mb-lightbox-overlay svg foreignObject span {
 }
 
 /* Prevent foreignObject clipping on multi-line <br> labels */
-body.mermaid-boost-enabled .markdown-rendered div.mermaid.mermaid-boost-card svg foreignObject,
-body.mermaid-boost-enabled div.mermaid.mermaid-boost-card svg foreignObject,
+body.mermaid-boost-enabled .markdown-rendered .mermaid.mermaid-boost-card svg foreignObject,
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card svg foreignObject,
 body.mermaid-boost-enabled .mb-lightbox-overlay svg foreignObject {
   overflow: visible;
 }
@@ -206,8 +206,8 @@ body.mermaid-boost-enabled.theme-dark .mermaid.mermaid-boost-card svg .node:hove
 }
 
 /* 4. Ultra-Tall Diagram Height Collapse & Expand Bar */
-body.mermaid-boost-enabled .markdown-rendered div.mermaid.mermaid-boost-card.is-mb-collapsible:not(.is-mb-expanded),
-body.mermaid-boost-enabled div.mermaid.mermaid-boost-card.is-mb-collapsible:not(.is-mb-expanded) {
+body.mermaid-boost-enabled .markdown-rendered .mermaid.mermaid-boost-card.is-mb-collapsible:not(.is-mb-expanded),
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card.is-mb-collapsible:not(.is-mb-expanded) {
   max-height: var(--mb-collapsed-height, 320px);
   overflow-y: auto;
   justify-content: flex-start;
