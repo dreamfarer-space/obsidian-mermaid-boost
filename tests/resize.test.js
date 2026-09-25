@@ -443,6 +443,24 @@ test("Mobile orientation changes and narrow containers do not overflow", async (
 
     renderedW = parseInt(svg.style.width, 10);
     assert.ok(renderedW <= 88, `Expected <= 88 in ultra-narrow container, got ${renderedW}`);
+
+    // Sub-48px narrow container (40px) caps final SVG width at containerWidth (no overflow)
+    host.clientWidth = 40;
+    block.clientWidth = 40;
+    observer.trigger([{ target: block, contentRect: { width: 40 } }]);
+    plugin.flushResizeBatch();
+
+    renderedW = parseInt(svg.style.width, 10);
+    assert.ok(renderedW <= 40, `Expected <= 40 in sub-48px container, got ${renderedW}`);
+
+    // Narrow wrapper inside wider hostContainer prioritizes observed wrapper width
+    host.clientWidth = 1000;
+    block.clientWidth = 300;
+    observer.trigger([{ target: block, contentRect: { width: 300 } }]);
+    plugin.flushResizeBatch();
+
+    renderedW = parseInt(svg.style.width, 10);
+    assert.ok(renderedW <= 300, `Expected <= 300 in column wrapper, got ${renderedW}`);
   } finally {
     restoreObsidian();
     delete global.ResizeObserver;
@@ -508,7 +526,7 @@ test("Restores observation and sizing without re-beautifying when an initialized
   global.ResizeObserver = MockResizeObserver;
 
   try {
-    const { block } = createMockMermaidBlock({ containerWidth: 600 });
+    const { block, svg, host } = createMockMermaidBlock({ containerWidth: 600 });
     let mutationCb = null;
     global.MutationObserver = class {
       constructor(cb) {
@@ -527,6 +545,7 @@ test("Restores observation and sizing without re-beautifying when an initialized
 
     // Initial decoration
     plugin.decorateMermaidBlock(block);
+    const initialWidth = parseInt(svg.style.width, 10);
     assert.equal(plugin._diagramObservers.size, 1);
 
     // Simulate node removed from DOM
@@ -542,6 +561,10 @@ test("Restores observation and sizing without re-beautifying when an initialized
       return origDecorate(...args);
     };
 
+    // Change host width while detached
+    host.clientWidth = 320;
+    block.clientWidth = 320;
+
     // Simulate node reinserted into DOM
     mutationCb([{ removedNodes: [], addedNodes: [block] }]);
 
@@ -549,6 +572,10 @@ test("Restores observation and sizing without re-beautifying when an initialized
     assert.equal(decorateCalls, 0);
     assert.equal(plugin._diagramObservers.size, 1);
     assert.equal(block.dataset.mbObserved, "true");
+
+    const reinsertedWidth = parseInt(svg.style.width, 10);
+    assert.ok(reinsertedWidth <= 288, `Expected reinsertedWidth <= 288, got ${reinsertedWidth}`);
+    assert.ok(reinsertedWidth < initialWidth, `Expected reinsertedWidth < initialWidth, got ${reinsertedWidth} >= ${initialWidth}`);
   } finally {
     restoreObsidian();
     delete global.ResizeObserver;

@@ -2365,7 +2365,7 @@ var MermaidBoostPlugin = class extends Plugin {
       minReadableScale: block.dataset && block.dataset.mbPresetOverride ? cardPreset.minReadableScale : this.settings.minReadableScale
     });
     const hostContainer = typeof block.closest === "function" && block.closest(".markdown-preview-sizer, .cm-content, .callout-content") || block.parentElement;
-    const containerWidth = explicitContainerWidth || hostContainer && hostContainer.clientWidth || block._mbObservedContainerWidth || block.clientWidth || 640;
+    const containerWidth = explicitContainerWidth || block._mbObservedContainerWidth || block.parentElement && typeof document !== "undefined" && block.parentElement !== document.body && block.parentElement.clientWidth || hostContainer && hostContainer.clientWidth || block.clientWidth || 640;
     const sizing = computeSmartDiagramSize(
       effectiveNat,
       diagramMeta,
@@ -2373,7 +2373,9 @@ var MermaidBoostPlugin = class extends Plugin {
       containerWidth
     );
     const userZoomFactor = parseFloat(block.dataset && block.dataset.mbZoomFactor || "1") || 1;
-    const finalWidth = Math.max(48, Math.round(sizing.width * userZoomFactor));
+    const minW = Math.min(48, Math.max(1, containerWidth));
+    const scaledW = Math.round(sizing.width * userZoomFactor);
+    const finalWidth = userZoomFactor > 1 ? Math.max(minW, scaledW) : Math.min(containerWidth, Math.max(minW, scaledW));
     const finalHeight = Math.max(36, Math.round(sizing.height * userZoomFactor));
     const displayPercent = Math.round(sizing.scale * userZoomFactor * 100);
     const targetW = `${finalWidth}px`;

@@ -566,8 +566,12 @@ class MermaidBoostPlugin extends Plugin {
       block.parentElement;
     const containerWidth =
       explicitContainerWidth ||
-      (hostContainer && hostContainer.clientWidth) ||
       block._mbObservedContainerWidth ||
+      (block.parentElement &&
+        typeof document !== "undefined" &&
+        block.parentElement !== document.body &&
+        block.parentElement.clientWidth) ||
+      (hostContainer && hostContainer.clientWidth) ||
       block.clientWidth ||
       640;
 
@@ -580,7 +584,12 @@ class MermaidBoostPlugin extends Plugin {
 
     const userZoomFactor =
       parseFloat((block.dataset && block.dataset.mbZoomFactor) || "1") || 1;
-    const finalWidth = Math.max(48, Math.round(sizing.width * userZoomFactor));
+    const minW = Math.min(48, Math.max(1, containerWidth));
+    const scaledW = Math.round(sizing.width * userZoomFactor);
+    const finalWidth =
+      userZoomFactor > 1
+        ? Math.max(minW, scaledW)
+        : Math.min(containerWidth, Math.max(minW, scaledW));
     const finalHeight = Math.max(36, Math.round(sizing.height * userZoomFactor));
     const displayPercent = Math.round(sizing.scale * userZoomFactor * 100);
 
