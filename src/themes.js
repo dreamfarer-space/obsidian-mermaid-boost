@@ -523,18 +523,30 @@ const THEMES = {
   }),
 };
 
+const LEGACY_THEME_MAP = {
+  "claude-anthropic": "claude",
+  "notion-pastel": "notion",
+  "github-tailwind": "github-light",
+  "excalidraw-sketch": "handcrafted",
+  "swiss-mono": "high-contrast",
+  "custom-obsidian": "claude",
+};
+
+/**
+ * Returns the next theme key in the 29-theme cycle.
+ */
+function nextThemeKey(currentTheme) {
+  const keys = Object.keys(THEMES);
+  const resolved = LEGACY_THEME_MAP[currentTheme] || currentTheme;
+  const currentIndex = keys.indexOf(resolved);
+  const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % keys.length : 0;
+  return keys[nextIndex] || "claude";
+}
+
 /**
  * Resolves the active theme specification from the 29 themes across 7 groups.
  */
 function resolveThemeSpec(settings = {}, isDark = false) {
-  const LEGACY_THEME_MAP = {
-    "claude-anthropic": "claude",
-    "notion-pastel": "notion",
-    "github-tailwind": "github-light",
-    "excalidraw-sketch": "handcrafted",
-    "swiss-mono": "high-contrast",
-    "custom-obsidian": "claude",
-  };
   const rawTheme = (settings && settings.theme) || "claude";
   const resolvedKey = LEGACY_THEME_MAP[rawTheme] || rawTheme;
   const baseTheme = THEMES[resolvedKey] || THEMES.claude;
@@ -554,5 +566,7 @@ module.exports = {
   mkTheme,
   THEME_GROUPS,
   THEMES,
+  LEGACY_THEME_MAP,
+  nextThemeKey,
   resolveThemeSpec,
 };

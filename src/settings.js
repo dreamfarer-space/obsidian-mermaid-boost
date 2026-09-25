@@ -58,7 +58,7 @@ const DEFAULT_SETTINGS = {
   maxWidth: 620,
   minReadableScale: 0.52,
   theme: "claude",
-  nodeRadius: 12,
+  nodeRadius: null,
   multiToneNodes: false,
   trimPiePadding: true,
   showCardFrame: true,
@@ -254,7 +254,11 @@ class MermaidBoostSettingTab extends PluginSettingTab {
       .addSlider((slider) =>
         slider
           .setLimits(0, 16, 1)
-          .setValue(this.plugin.settings.nodeRadius)
+          .setValue(
+            Number.isFinite(this.plugin.settings.nodeRadius)
+              ? this.plugin.settings.nodeRadius
+              : (activeThemeSpec.defaultRadius ?? 6)
+          )
           .setDynamicTooltip()
           .onChange(async (val) => {
             this.plugin.settings.nodeRadius = val;
@@ -273,7 +277,17 @@ class MermaidBoostSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Card Frame & Dot Grid")
+      .setName("Card Frame")
+      .setDesc("Display themed card frame with rounded border and background container around diagrams.")
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.showCardFrame).onChange(async (val) => {
+          this.plugin.settings.showCardFrame = val;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(containerEl)
+      .setName("Dot Grid")
       .setDesc("Display subtle dot-grid canvas background inside diagram cards.")
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.showDotGrid).onChange(async (val) => {

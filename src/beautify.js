@@ -98,6 +98,7 @@ function classifyGraphTopology(svg) {
     svg.querySelectorAll(".edgePath, .flowchart-link, path[data-edge], g.edgePaths > g")
   );
 
+  const keySet = new Set(nodeIds);
   const sortedKeys = [...nodeIds].sort((a, b) => b.length - a.length);
 
   edges.forEach((edge) => {
@@ -105,7 +106,27 @@ function classifyGraphTopology(svg) {
       (typeof edge.getAttribute === "function" &&
         (edge.getAttribute("id") || edge.getAttribute("class"))) ||
       "";
+    if (!idStr) return;
+
+    // Fast path: check for Mermaid's standard LS-src-LE-dst pattern
+    const lsMatch = idStr.match(/LS-(.+?)[-_]LE-(.+?)(?:$|[-_\s])/);
+    if (lsMatch && keySet.has(lsMatch[1]) && keySet.has(lsMatch[2])) {
+      adj.get(lsMatch[1]).add(lsMatch[2]);
+      rev.get(lsMatch[2]).add(lsMatch[1]);
+      return;
+    }
+
+    // Fast path: flowchart-src-dst-N or L-src-dst-N
+    const lMatch = idStr.match(/(?:flowchart|L)[-_](.+?)[-_](.+?)(?:[-_]\d+)?$/);
+    if (lMatch && keySet.has(lMatch[1]) && keySet.has(lMatch[2])) {
+      adj.get(lMatch[1]).add(lMatch[2]);
+      rev.get(lMatch[2]).add(lMatch[1]);
+      return;
+    }
+
+    let matched = false;
     for (const src of sortedKeys) {
+      if (!idStr.includes(src)) continue;
       for (const dst of sortedKeys) {
         if (src === dst) continue;
         if (
@@ -115,8 +136,11 @@ function classifyGraphTopology(svg) {
         ) {
           adj.get(src).add(dst);
           rev.get(dst).add(src);
+          matched = true;
+          break;
         }
       }
+      if (matched) break;
     }
   });
 
@@ -262,11 +286,14 @@ function beautifySvgDom(svg, settings = {}, isDark = false) {
   if (!svg || typeof svg.querySelectorAll !== "function") return;
   const merged = Object.assign({}, DEFAULT_SETTINGS, settings);
   const { themeKey, themeObj, palette } = resolveThemeSpec(merged, isDark);
-  const radius = Number.isFinite(themeObj.defaultRadius)
-    ? themeObj.defaultRadius
-    : Number.isFinite(settings.nodeRadius)
-    ? settings.nodeRadius
-    : merged.nodeRadius;
+  const radius =
+    typeof settings.nodeRadius === "number" && Number.isFinite(settings.nodeRadius)
+      ? settings.nodeRadius
+      : Number.isFinite(themeObj.defaultRadius)
+      ? themeObj.defaultRadius
+      : Number.isFinite(merged.nodeRadius)
+      ? merged.nodeRadius
+      : 6;
   const svgFilter = themeObj.svgFilter || "none";
   const fontFamily =
     themeObj.fontFamily ||
@@ -331,7 +358,8 @@ function beautifySvgDom(svg, settings = {}, isDark = false) {
   });
 
   // 2. Flowchart / State / Sequence Nodes
-  const topology = classifyGraphTopology(svg);
+  const needsTopology = Boolean(merged.multiToneNodes || (palette && palette.nodeMap));
+  const topology = needsTopology ? classifyGraphTopology(svg) : new Map();
   const sectionList = palette.sectionPalettes || palette.branchPalettes;
   const detailList = palette.detailPalettes || palette.branchPalettes;
   const nodes = Array.from(svg.querySelectorAll(".node, .statediagram-state"));

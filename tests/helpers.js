@@ -36,6 +36,9 @@ function createMockElement(tagName, attrs = {}, children = []) {
           .forEach((c) => classSet.add(c));
       }
     },
+    removeAttribute(name) {
+      delete attributes[name];
+    },
     appendChild(child) {
       children.push(child);
       if (!this.firstChild) this.firstChild = child;
@@ -53,7 +56,7 @@ function createMockElement(tagName, attrs = {}, children = []) {
       const results = [];
       const selectors = selector.split(",").map((s) => s.trim());
       const matchesSingle = (node, sel) => {
-        if (sel === "#mb-node-shadow") return node.getAttribute("id") === "mb-node-shadow";
+        if (sel.startsWith("#")) return node.getAttribute("id") === sel.slice(1);
         if (sel === "defs") return node.tagName.toLowerCase() === "defs";
         if (sel === "rect") return node.tagName.toLowerCase() === "rect";
         if (sel === "path.pieCircle")

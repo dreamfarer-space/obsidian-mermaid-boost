@@ -8,7 +8,7 @@ const {
   tightenPieViewBox,
   computeSmartDiagramSize,
 } = require("./sizing.js");
-const { THEMES, resolveThemeSpec } = require("./themes.js");
+const { THEMES, resolveThemeSpec, LEGACY_THEME_MAP, nextThemeKey } = require("./themes.js");
 const { beautifySvgDom } = require("./beautify.js");
 const { resolveLiveCssColor, exportSvgAsPng } = require("./export.js");
 const { openFullscreenLightbox } = require("./lightbox.js");
@@ -52,17 +52,7 @@ class MermaidBoostPlugin extends Plugin {
     this.addCommand({
       id: "cycle-theme",
       name: "Cycle Theme Palette",
-      callback: async () => {
-        const keys = Object.keys(THEMES);
-        const idx = keys.indexOf(this.settings.theme);
-        const nextKey = keys[(idx + 1) % keys.length];
-        this.settings.theme = nextKey;
-        if (THEMES[nextKey] && Number.isFinite(THEMES[nextKey].defaultRadius)) {
-          this.settings.nodeRadius = THEMES[nextKey].defaultRadius;
-        }
-        await this.saveSettings();
-        new Notice(`Mermaid Boost theme: ${THEMES[nextKey].name}`);
-      },
+      callback: () => this.cycleTheme(),
     });
 
     this.addCommand({
@@ -91,7 +81,20 @@ class MermaidBoostPlugin extends Plugin {
     if (this._resizeTimer) {
       window.clearTimeout(this._resizeTimer);
     }
-    document.body.classList.remove("mermaid-boost-enabled", "mermaid-boost-dot-grid");
+    if (this._openLightboxes) {
+      this._openLightboxes.forEach((close) => {
+        try {
+          close();
+        } catch (_e) {}
+      });
+      this._openLightboxes.clear();
+    }
+    document.querySelectorAll(".mb-lightbox-overlay").forEach((el) => el.remove());
+    document.body.classList.remove(
+      "mermaid-boost-enabled",
+      "mermaid-boost-dot-grid",
+      "mermaid-boost-frame"
+    );
     const blocks = document.querySelectorAll(".mermaid-boost-card");
     blocks.forEach((block) => {
       block.classList.remove(
@@ -108,6 +111,14 @@ class MermaidBoostPlugin extends Plugin {
         if (svg.dataset.mbOrigViewBox) {
           svg.setAttribute("viewBox", svg.dataset.mbOrigViewBox);
         }
+        delete svg.dataset.mbDblClickBound;
+        delete svg.dataset.mbOrigViewBox;
+        delete svg.dataset.mbNaturalWidth;
+        delete svg.dataset.mbNaturalHeight;
+        delete svg.dataset.mbNaturalX;
+        delete svg.dataset.mbNaturalY;
+        delete svg.dataset.mbViewBoxPadded;
+        delete svg.dataset.mbStyledTheme;
         svg.style.removeProperty("width");
         svg.style.removeProperty("height");
         svg.style.removeProperty("max-width");
@@ -115,18 +126,22 @@ class MermaidBoostPlugin extends Plugin {
     });
   }
 
+  async cycleTheme() {
+    const nextKey = nextThemeKey(this.settings.theme);
+    this.settings.theme = nextKey;
+    const themeDef = THEMES[nextKey];
+    if (themeDef && Number.isFinite(themeDef.defaultRadius)) {
+      this.settings.nodeRadius = themeDef.defaultRadius;
+    }
+    await this.saveSettings();
+    new Notice(`Mermaid Boost theme: ${themeDef ? themeDef.name : nextKey}`);
+    return nextKey;
+  }
+
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-    const LEGACY_MAP = {
-      "claude-anthropic": "claude",
-      "notion-pastel": "notion",
-      "github-tailwind": "github-light",
-      "excalidraw-sketch": "handcrafted",
-      "swiss-mono": "high-contrast",
-      "custom-obsidian": "claude",
-    };
-    if (LEGACY_MAP[this.settings.theme]) {
-      this.settings.theme = LEGACY_MAP[this.settings.theme];
+    if (LEGACY_THEME_MAP[this.settings.theme]) {
+      this.settings.theme = LEGACY_THEME_MAP[this.settings.theme];
     }
     if (!THEMES[this.settings.theme]) {
       this.settings.theme = "claude";
@@ -380,12 +395,17 @@ class MermaidBoostPlugin extends Plugin {
     // Attach double-click fullscreen listener once
     if (!svg.dataset.mbDblClickBound) {
       svg.dataset.mbDblClickBound = "true";
-      svg.addEventListener("dblclick", (e) => {
+      const onDblClick = (e) => {
         if (!this.settings.doubleClickFullscreen) return;
         e.preventDefault();
         e.stopPropagation();
         this.openFullscreenLightbox(svg, diagramMeta);
-      });
+      };
+      if (typeof this.registerDomEvent === "function") {
+        this.registerDomEvent(svg, "dblclick", onDblClick);
+      } else {
+        svg.addEventListener("dblclick", onDblClick);
+      }
     }
   }
 
@@ -471,16 +491,7 @@ class MermaidBoostPlugin extends Plugin {
     });
 
     // 4. Theme Quick Switcher
-    addIconBtn("palette", "Switch Theme", async () => {
-      const keys = Object.keys(THEMES);
-      const nextKey = keys[(keys.indexOf(this.settings.theme) + 1) % keys.length];
-      this.settings.theme = nextKey;
-      if (THEMES[nextKey] && Number.isFinite(THEMES[nextKey].defaultRadius)) {
-        this.settings.nodeRadius = THEMES[nextKey].defaultRadius;
-      }
-      await this.saveSettings();
-      new Notice(`Theme: ${THEMES[nextKey].name}`);
-    });
+    addIconBtn("palette", "Switch Theme", () => this.cycleTheme());
 
     // 5. Copy / Export PNG
     addIconBtn("camera", "Copy HD PNG", () => {
@@ -502,11 +513,25 @@ class MermaidBoostPlugin extends Plugin {
   }
 
   openFullscreenLightbox(sourceSvg, diagramMeta) {
-    return openFullscreenLightbox(sourceSvg, diagramMeta, {
+    let closeFn = null;
+    closeFn = openFullscreenLightbox(sourceSvg, diagramMeta, {
       settings: this.settings,
       saveSettings: () => this.saveSettings(),
+      cycleTheme: () => this.cycleTheme(),
       exportSvgAsPng: (svg) => this.exportSvgAsPng(svg),
+      onClose: () => {
+        if (closeFn && this._openLightboxes) {
+          this._openLightboxes.delete(closeFn);
+        }
+      },
     });
+    if (closeFn) {
+      if (!this._openLightboxes) {
+        this._openLightboxes = new Set();
+      }
+      this._openLightboxes.add(closeFn);
+    }
+    return closeFn;
   }
 }
 

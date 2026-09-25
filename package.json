@@ -7,7 +7,7 @@
     "build": "node scripts/build.js",
     "build:check": "node scripts/build.js --check",
     "dev": "node scripts/build.js --watch",
-    "test": "node --test",
+    "test": "node --test \"tests/*.test.js\"",
     "validate": "node scripts/validate-plugin.js"
   },
   "keywords": [

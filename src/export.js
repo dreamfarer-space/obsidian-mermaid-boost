@@ -44,7 +44,17 @@ async function exportSvgAsPng(svg, settings = {}, isDark) {
     // Re-run beautifySvgDom on the source svg first so latest theme & padding are guaranteed
     beautifySvgDom(svg, settings, dark);
 
-    const nat = extractSvgNaturalSize(svg) || { x: 0, y: 0, width: 640, height: 420 };
+    let nat = null;
+    const currentVb = typeof svg.getAttribute === "function" ? svg.getAttribute("viewBox") : null;
+    if (currentVb) {
+      const parts = currentVb.trim().split(/[\s,]+/).map(Number);
+      if (parts.length === 4 && parts.every(Number.isFinite) && parts[2] > 0 && parts[3] > 0) {
+        nat = { x: parts[0], y: parts[1], width: parts[2], height: parts[3] };
+      }
+    }
+    if (!nat) {
+      nat = extractSvgNaturalSize(svg) || { x: 0, y: 0, width: 640, height: 420 };
+    }
     const scale = 3.0;
     const { themeObj, palette } = resolveThemeSpec(settings, dark);
     const resolvedCardBg = resolveLiveCssColor(

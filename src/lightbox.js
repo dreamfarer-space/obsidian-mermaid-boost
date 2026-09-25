@@ -11,11 +11,17 @@ try {
   Notice = class {};
 }
 const { extractSvgNaturalSize } = require("./sizing.js");
-const { THEMES } = require("./themes.js");
+const { THEMES, nextThemeKey } = require("./themes.js");
 const { beautifySvgDom } = require("./beautify.js");
 
 function openFullscreenLightbox(sourceSvg, diagramMeta, options = {}) {
-  const { settings = {}, saveSettings = async () => {}, exportSvgAsPng = async () => {} } = options;
+  const {
+    settings = {},
+    saveSettings = async () => {},
+    exportSvgAsPng = async () => {},
+    cycleTheme,
+    onClose,
+  } = options;
 
   const nat = extractSvgNaturalSize(sourceSvg) || { width: 640, height: 420 };
   const overlay = document.createElement("div");
@@ -111,18 +117,24 @@ function openFullscreenLightbox(sourceSvg, diagramMeta, options = {}) {
   updateThemeBtnText();
   themeBtn.addEventListener("click", async (e) => {
     e.stopPropagation();
-    const keys = Object.keys(THEMES);
-    const idx = keys.indexOf(settings.theme);
-    const nextKey = keys[(idx + 1) % keys.length];
-    settings.theme = nextKey;
-    if (THEMES[nextKey] && Number.isFinite(THEMES[nextKey].defaultRadius)) {
-      settings.nodeRadius = THEMES[nextKey].defaultRadius;
+    let nextKey;
+    if (typeof cycleTheme === "function") {
+      nextKey = await cycleTheme();
+    } else {
+      nextKey = nextThemeKey(settings.theme);
+      settings.theme = nextKey;
+      if (THEMES[nextKey] && Number.isFinite(THEMES[nextKey].defaultRadius)) {
+        settings.nodeRadius = THEMES[nextKey].defaultRadius;
+      }
+      await saveSettings();
+      new Notice(`Theme: ${THEMES[nextKey].name}`);
     }
-    await saveSettings();
-    const isDark = document.body.classList.contains("theme-dark");
+    const isDark =
+      typeof document !== "undefined" &&
+      document.body &&
+      document.body.classList.contains("theme-dark");
     beautifySvgDom(svgClone, settings, isDark);
     updateThemeBtnText();
-    new Notice(`Theme: ${THEMES[nextKey].name}`);
   });
   actions.appendChild(themeBtn);
 
@@ -136,9 +148,15 @@ function openFullscreenLightbox(sourceSvg, diagramMeta, options = {}) {
   makeBtn("rotate-ccw", "Fit to Screen (0)", fitToScreen);
   makeBtn("camera", "Copy HD PNG", () => exportSvgAsPng(svgClone));
 
+  let closed = false;
   const closeLightbox = () => {
+    if (closed) return;
+    closed = true;
     window.removeEventListener("keydown", onKeyDown);
     overlay.remove();
+    if (typeof onClose === "function") {
+      onClose();
+    }
   };
 
   makeBtn("x", "Close (Esc)", closeLightbox, "mb-close-btn");
@@ -195,6 +213,7 @@ function openFullscreenLightbox(sourceSvg, diagramMeta, options = {}) {
   window.addEventListener("keydown", onKeyDown);
 
   window.requestAnimationFrame(fitToScreen);
+  return closeLightbox;
 }
 
 module.exports = {

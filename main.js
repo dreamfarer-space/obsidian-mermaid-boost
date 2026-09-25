@@ -515,17 +515,24 @@ var require_themes = __commonJS({
         font: SANS
       })
     };
+    var LEGACY_THEME_MAP2 = {
+      "claude-anthropic": "claude",
+      "notion-pastel": "notion",
+      "github-tailwind": "github-light",
+      "excalidraw-sketch": "handcrafted",
+      "swiss-mono": "high-contrast",
+      "custom-obsidian": "claude"
+    };
+    function nextThemeKey2(currentTheme) {
+      const keys = Object.keys(THEMES2);
+      const resolved = LEGACY_THEME_MAP2[currentTheme] || currentTheme;
+      const currentIndex = keys.indexOf(resolved);
+      const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % keys.length : 0;
+      return keys[nextIndex] || "claude";
+    }
     function resolveThemeSpec2(settings = {}, isDark = false) {
-      const LEGACY_THEME_MAP = {
-        "claude-anthropic": "claude",
-        "notion-pastel": "notion",
-        "github-tailwind": "github-light",
-        "excalidraw-sketch": "handcrafted",
-        "swiss-mono": "high-contrast",
-        "custom-obsidian": "claude"
-      };
       const rawTheme = settings && settings.theme || "claude";
-      const resolvedKey = LEGACY_THEME_MAP[rawTheme] || rawTheme;
+      const resolvedKey = LEGACY_THEME_MAP2[rawTheme] || rawTheme;
       const baseTheme = THEMES2[resolvedKey] || THEMES2.claude;
       return {
         themeKey: THEMES2[resolvedKey] ? resolvedKey : "claude",
@@ -541,6 +548,8 @@ var require_themes = __commonJS({
       mkTheme,
       THEME_GROUPS,
       THEMES: THEMES2,
+      LEGACY_THEME_MAP: LEGACY_THEME_MAP2,
+      nextThemeKey: nextThemeKey2,
       resolveThemeSpec: resolveThemeSpec2
     };
   }
@@ -608,7 +617,7 @@ var require_settings = __commonJS({
       maxWidth: 620,
       minReadableScale: 0.52,
       theme: "claude",
-      nodeRadius: 12,
+      nodeRadius: null,
       multiToneNodes: false,
       trimPiePadding: true,
       showCardFrame: true,
@@ -741,7 +750,9 @@ var require_settings = __commonJS({
           })
         );
         new Setting(containerEl).setName("Node Corner Radius").setDesc("Rounded corner radius for diagram nodes and cards.").addSlider(
-          (slider) => slider.setLimits(0, 16, 1).setValue(this.plugin.settings.nodeRadius).setDynamicTooltip().onChange(async (val) => {
+          (slider) => slider.setLimits(0, 16, 1).setValue(
+            Number.isFinite(this.plugin.settings.nodeRadius) ? this.plugin.settings.nodeRadius : activeThemeSpec.defaultRadius ?? 6
+          ).setDynamicTooltip().onChange(async (val) => {
             this.plugin.settings.nodeRadius = val;
             await this.plugin.saveSettings();
           })
@@ -752,7 +763,13 @@ var require_settings = __commonJS({
             await this.plugin.saveSettings();
           })
         );
-        new Setting(containerEl).setName("Card Frame & Dot Grid").setDesc("Display subtle dot-grid canvas background inside diagram cards.").addToggle(
+        new Setting(containerEl).setName("Card Frame").setDesc("Display themed card frame with rounded border and background container around diagrams.").addToggle(
+          (toggle) => toggle.setValue(this.plugin.settings.showCardFrame).onChange(async (val) => {
+            this.plugin.settings.showCardFrame = val;
+            await this.plugin.saveSettings();
+          })
+        );
+        new Setting(containerEl).setName("Dot Grid").setDesc("Display subtle dot-grid canvas background inside diagram cards.").addToggle(
           (toggle) => toggle.setValue(this.plugin.settings.showDotGrid).onChange(async (val) => {
             this.plugin.settings.showDotGrid = val;
             await this.plugin.saveSettings();
@@ -1050,17 +1067,36 @@ var require_beautify = __commonJS({
       const edges = Array.from(
         svg.querySelectorAll(".edgePath, .flowchart-link, path[data-edge], g.edgePaths > g")
       );
+      const keySet = new Set(nodeIds);
       const sortedKeys = [...nodeIds].sort((a, b) => b.length - a.length);
       edges.forEach((edge) => {
         const idStr = typeof edge.getAttribute === "function" && (edge.getAttribute("id") || edge.getAttribute("class")) || "";
+        if (!idStr) return;
+        const lsMatch = idStr.match(/LS-(.+?)[-_]LE-(.+?)(?:$|[-_\s])/);
+        if (lsMatch && keySet.has(lsMatch[1]) && keySet.has(lsMatch[2])) {
+          adj.get(lsMatch[1]).add(lsMatch[2]);
+          rev.get(lsMatch[2]).add(lsMatch[1]);
+          return;
+        }
+        const lMatch = idStr.match(/(?:flowchart|L)[-_](.+?)[-_](.+?)(?:[-_]\d+)?$/);
+        if (lMatch && keySet.has(lMatch[1]) && keySet.has(lMatch[2])) {
+          adj.get(lMatch[1]).add(lMatch[2]);
+          rev.get(lMatch[2]).add(lMatch[1]);
+          return;
+        }
+        let matched = false;
         for (const src of sortedKeys) {
+          if (!idStr.includes(src)) continue;
           for (const dst of sortedKeys) {
             if (src === dst) continue;
             if (idStr.includes(`-${src}-${dst}`) || idStr.includes(`_${src}_${dst}`) || idStr.includes(`LS-${src}`) && idStr.includes(`LE-${dst}`)) {
               adj.get(src).add(dst);
               rev.get(dst).add(src);
+              matched = true;
+              break;
             }
           }
+          if (matched) break;
         }
       });
       const anyEdgeMatched = Array.from(rev.values()).some((s) => s.size > 0);
@@ -1175,7 +1211,7 @@ var require_beautify = __commonJS({
       if (!svg || typeof svg.querySelectorAll !== "function") return;
       const merged = Object.assign({}, DEFAULT_SETTINGS2, settings);
       const { themeKey, themeObj, palette } = resolveThemeSpec2(merged, isDark);
-      const radius = Number.isFinite(themeObj.defaultRadius) ? themeObj.defaultRadius : Number.isFinite(settings.nodeRadius) ? settings.nodeRadius : merged.nodeRadius;
+      const radius = typeof settings.nodeRadius === "number" && Number.isFinite(settings.nodeRadius) ? settings.nodeRadius : Number.isFinite(themeObj.defaultRadius) ? themeObj.defaultRadius : Number.isFinite(merged.nodeRadius) ? merged.nodeRadius : 6;
       const svgFilter = themeObj.svgFilter || "none";
       const fontFamily = themeObj.fontFamily || '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif';
       const strokeWidth = themeObj.strokeWidth || "1.5px";
@@ -1228,7 +1264,8 @@ var require_beautify = __commonJS({
           applyStyleProp(lbl, "fontWeight", "600");
         });
       });
-      const topology = classifyGraphTopology(svg);
+      const needsTopology = Boolean(merged.multiToneNodes || palette && palette.nodeMap);
+      const topology = needsTopology ? classifyGraphTopology(svg) : /* @__PURE__ */ new Map();
       const sectionList = palette.sectionPalettes || palette.branchPalettes;
       const detailList = palette.detailPalettes || palette.branchPalettes;
       const nodes = Array.from(svg.querySelectorAll(".node, .statediagram-state"));
@@ -1509,7 +1546,17 @@ var require_export = __commonJS({
       const dark = typeof isDark === "boolean" ? isDark : typeof document !== "undefined" && document.body && document.body.classList.contains("theme-dark");
       try {
         beautifySvgDom2(svg, settings, dark);
-        const nat = extractSvgNaturalSize2(svg) || { x: 0, y: 0, width: 640, height: 420 };
+        let nat = null;
+        const currentVb = typeof svg.getAttribute === "function" ? svg.getAttribute("viewBox") : null;
+        if (currentVb) {
+          const parts = currentVb.trim().split(/[\s,]+/).map(Number);
+          if (parts.length === 4 && parts.every(Number.isFinite) && parts[2] > 0 && parts[3] > 0) {
+            nat = { x: parts[0], y: parts[1], width: parts[2], height: parts[3] };
+          }
+        }
+        if (!nat) {
+          nat = extractSvgNaturalSize2(svg) || { x: 0, y: 0, width: 640, height: 420 };
+        }
         const scale = 3;
         const { themeObj, palette } = resolveThemeSpec2(settings, dark);
         const resolvedCardBg = resolveLiveCssColor2(
@@ -1664,12 +1711,18 @@ var require_lightbox = __commonJS({
       };
     }
     var { extractSvgNaturalSize: extractSvgNaturalSize2 } = require_sizing();
-    var { THEMES: THEMES2 } = require_themes();
+    var { THEMES: THEMES2, nextThemeKey: nextThemeKey2 } = require_themes();
     var { beautifySvgDom: beautifySvgDom2 } = require_beautify();
     function openFullscreenLightbox2(sourceSvg, diagramMeta, options = {}) {
-      const { settings = {}, saveSettings = async () => {
-      }, exportSvgAsPng: exportSvgAsPng2 = async () => {
-      } } = options;
+      const {
+        settings = {},
+        saveSettings = async () => {
+        },
+        exportSvgAsPng: exportSvgAsPng2 = async () => {
+        },
+        cycleTheme,
+        onClose
+      } = options;
       const nat = extractSvgNaturalSize2(sourceSvg) || { width: 640, height: 420 };
       const overlay = document.createElement("div");
       overlay.className = "mb-lightbox-overlay";
@@ -1751,18 +1804,21 @@ var require_lightbox = __commonJS({
       updateThemeBtnText();
       themeBtn.addEventListener("click", async (e) => {
         e.stopPropagation();
-        const keys = Object.keys(THEMES2);
-        const idx = keys.indexOf(settings.theme);
-        const nextKey = keys[(idx + 1) % keys.length];
-        settings.theme = nextKey;
-        if (THEMES2[nextKey] && Number.isFinite(THEMES2[nextKey].defaultRadius)) {
-          settings.nodeRadius = THEMES2[nextKey].defaultRadius;
+        let nextKey;
+        if (typeof cycleTheme === "function") {
+          nextKey = await cycleTheme();
+        } else {
+          nextKey = nextThemeKey2(settings.theme);
+          settings.theme = nextKey;
+          if (THEMES2[nextKey] && Number.isFinite(THEMES2[nextKey].defaultRadius)) {
+            settings.nodeRadius = THEMES2[nextKey].defaultRadius;
+          }
+          await saveSettings();
+          new Notice2(`Theme: ${THEMES2[nextKey].name}`);
         }
-        await saveSettings();
-        const isDark = document.body.classList.contains("theme-dark");
+        const isDark = typeof document !== "undefined" && document.body && document.body.classList.contains("theme-dark");
         beautifySvgDom2(svgClone, settings, isDark);
         updateThemeBtnText();
-        new Notice2(`Theme: ${THEMES2[nextKey].name}`);
       });
       actions.appendChild(themeBtn);
       makeBtn(
@@ -1778,9 +1834,15 @@ var require_lightbox = __commonJS({
       );
       makeBtn("rotate-ccw", "Fit to Screen (0)", fitToScreen);
       makeBtn("camera", "Copy HD PNG", () => exportSvgAsPng2(svgClone));
+      let closed = false;
       const closeLightbox = () => {
+        if (closed) return;
+        closed = true;
         window.removeEventListener("keydown", onKeyDown);
         overlay.remove();
+        if (typeof onClose === "function") {
+          onClose();
+        }
       };
       makeBtn("x", "Close (Esc)", closeLightbox, "mb-close-btn");
       header.appendChild(actions);
@@ -1829,6 +1891,7 @@ var require_lightbox = __commonJS({
       };
       window.addEventListener("keydown", onKeyDown);
       window.requestAnimationFrame(fitToScreen);
+      return closeLightbox;
     }
     module2.exports = {
       openFullscreenLightbox: openFullscreenLightbox2
@@ -1845,7 +1908,7 @@ var {
   tightenPieViewBox,
   computeSmartDiagramSize
 } = require_sizing();
-var { THEMES, resolveThemeSpec } = require_themes();
+var { THEMES, resolveThemeSpec, LEGACY_THEME_MAP, nextThemeKey } = require_themes();
 var { beautifySvgDom } = require_beautify();
 var { resolveLiveCssColor, exportSvgAsPng } = require_export();
 var { openFullscreenLightbox } = require_lightbox();
@@ -1883,17 +1946,7 @@ var MermaidBoostPlugin = class extends Plugin {
     this.addCommand({
       id: "cycle-theme",
       name: "Cycle Theme Palette",
-      callback: async () => {
-        const keys = Object.keys(THEMES);
-        const idx = keys.indexOf(this.settings.theme);
-        const nextKey = keys[(idx + 1) % keys.length];
-        this.settings.theme = nextKey;
-        if (THEMES[nextKey] && Number.isFinite(THEMES[nextKey].defaultRadius)) {
-          this.settings.nodeRadius = THEMES[nextKey].defaultRadius;
-        }
-        await this.saveSettings();
-        new Notice(`Mermaid Boost theme: ${THEMES[nextKey].name}`);
-      }
+      callback: () => this.cycleTheme()
     });
     this.addCommand({
       id: "refresh-all-mermaid",
@@ -1920,7 +1973,21 @@ var MermaidBoostPlugin = class extends Plugin {
     if (this._resizeTimer) {
       window.clearTimeout(this._resizeTimer);
     }
-    document.body.classList.remove("mermaid-boost-enabled", "mermaid-boost-dot-grid");
+    if (this._openLightboxes) {
+      this._openLightboxes.forEach((close) => {
+        try {
+          close();
+        } catch (_e) {
+        }
+      });
+      this._openLightboxes.clear();
+    }
+    document.querySelectorAll(".mb-lightbox-overlay").forEach((el) => el.remove());
+    document.body.classList.remove(
+      "mermaid-boost-enabled",
+      "mermaid-boost-dot-grid",
+      "mermaid-boost-frame"
+    );
     const blocks = document.querySelectorAll(".mermaid-boost-card");
     blocks.forEach((block) => {
       block.classList.remove(
@@ -1937,24 +2004,35 @@ var MermaidBoostPlugin = class extends Plugin {
         if (svg.dataset.mbOrigViewBox) {
           svg.setAttribute("viewBox", svg.dataset.mbOrigViewBox);
         }
+        delete svg.dataset.mbDblClickBound;
+        delete svg.dataset.mbOrigViewBox;
+        delete svg.dataset.mbNaturalWidth;
+        delete svg.dataset.mbNaturalHeight;
+        delete svg.dataset.mbNaturalX;
+        delete svg.dataset.mbNaturalY;
+        delete svg.dataset.mbViewBoxPadded;
+        delete svg.dataset.mbStyledTheme;
         svg.style.removeProperty("width");
         svg.style.removeProperty("height");
         svg.style.removeProperty("max-width");
       }
     });
   }
+  async cycleTheme() {
+    const nextKey = nextThemeKey(this.settings.theme);
+    this.settings.theme = nextKey;
+    const themeDef = THEMES[nextKey];
+    if (themeDef && Number.isFinite(themeDef.defaultRadius)) {
+      this.settings.nodeRadius = themeDef.defaultRadius;
+    }
+    await this.saveSettings();
+    new Notice(`Mermaid Boost theme: ${themeDef ? themeDef.name : nextKey}`);
+    return nextKey;
+  }
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-    const LEGACY_MAP = {
-      "claude-anthropic": "claude",
-      "notion-pastel": "notion",
-      "github-tailwind": "github-light",
-      "excalidraw-sketch": "handcrafted",
-      "swiss-mono": "high-contrast",
-      "custom-obsidian": "claude"
-    };
-    if (LEGACY_MAP[this.settings.theme]) {
-      this.settings.theme = LEGACY_MAP[this.settings.theme];
+    if (LEGACY_THEME_MAP[this.settings.theme]) {
+      this.settings.theme = LEGACY_THEME_MAP[this.settings.theme];
     }
     if (!THEMES[this.settings.theme]) {
       this.settings.theme = "claude";
@@ -2157,12 +2235,17 @@ var MermaidBoostPlugin = class extends Plugin {
     this.ensureToolbar(block, svg, diagramMeta, displayPercent, cardPresetKey);
     if (!svg.dataset.mbDblClickBound) {
       svg.dataset.mbDblClickBound = "true";
-      svg.addEventListener("dblclick", (e) => {
+      const onDblClick = (e) => {
         if (!this.settings.doubleClickFullscreen) return;
         e.preventDefault();
         e.stopPropagation();
         this.openFullscreenLightbox(svg, diagramMeta);
-      });
+      };
+      if (typeof this.registerDomEvent === "function") {
+        this.registerDomEvent(svg, "dblclick", onDblClick);
+      } else {
+        svg.addEventListener("dblclick", onDblClick);
+      }
     }
   }
   ensureExpandBar(block, fullHeight, collapsedHeight) {
@@ -2234,16 +2317,7 @@ var MermaidBoostPlugin = class extends Plugin {
       delete block.dataset.mbPresetOverride;
       this.decorateMermaidBlock(block);
     });
-    addIconBtn("palette", "Switch Theme", async () => {
-      const keys = Object.keys(THEMES);
-      const nextKey = keys[(keys.indexOf(this.settings.theme) + 1) % keys.length];
-      this.settings.theme = nextKey;
-      if (THEMES[nextKey] && Number.isFinite(THEMES[nextKey].defaultRadius)) {
-        this.settings.nodeRadius = THEMES[nextKey].defaultRadius;
-      }
-      await this.saveSettings();
-      new Notice(`Theme: ${THEMES[nextKey].name}`);
-    });
+    addIconBtn("palette", "Switch Theme", () => this.cycleTheme());
     addIconBtn("camera", "Copy HD PNG", () => {
       this.exportSvgAsPng(svg);
     });
@@ -2258,11 +2332,25 @@ var MermaidBoostPlugin = class extends Plugin {
     return exportSvgAsPng(svg, this.settings, this.isDarkMode());
   }
   openFullscreenLightbox(sourceSvg, diagramMeta) {
-    return openFullscreenLightbox(sourceSvg, diagramMeta, {
+    let closeFn = null;
+    closeFn = openFullscreenLightbox(sourceSvg, diagramMeta, {
       settings: this.settings,
       saveSettings: () => this.saveSettings(),
-      exportSvgAsPng: (svg) => this.exportSvgAsPng(svg)
+      cycleTheme: () => this.cycleTheme(),
+      exportSvgAsPng: (svg) => this.exportSvgAsPng(svg),
+      onClose: () => {
+        if (closeFn && this._openLightboxes) {
+          this._openLightboxes.delete(closeFn);
+        }
+      }
     });
+    if (closeFn) {
+      if (!this._openLightboxes) {
+        this._openLightboxes = /* @__PURE__ */ new Set();
+      }
+      this._openLightboxes.add(closeFn);
+    }
+    return closeFn;
   }
 };
 module.exports = MermaidBoostPlugin;

@@ -13,6 +13,8 @@ const {
   mkTheme,
   THEME_GROUPS,
   THEMES,
+  LEGACY_THEME_MAP,
+  nextThemeKey,
   resolveThemeSpec,
 } = require("./src/themes.js");
 const {
@@ -40,6 +42,8 @@ module.exports = {
   mkTheme,
   THEME_GROUPS,
   THEMES,
+  LEGACY_THEME_MAP,
+  nextThemeKey,
   DIAGRAM_TYPE_LABELS,
   extractSvgNaturalSize,
   detectDiagramType,

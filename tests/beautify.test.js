@@ -51,6 +51,7 @@ test("classifyGraphTopology & beautifySvgDom apply all 7 groups (29 themes) matc
   assert.equal(rect1.getAttribute("rx"), "12");
   assert.equal(rect1.style.fill, "#fff3b0");
   assert.equal(svg.getAttribute("filter"), "url(#mb-wobble)");
+  assert.equal(svg.querySelectorAll("#mb-wobble").length, 1);
 
   // 2. Developer: Nord & Dracula
   beautifySvgDom(svg, { ...DEFAULT_SETTINGS, theme: "nord" }, false);
@@ -58,6 +59,15 @@ test("classifyGraphTopology & beautifySvgDom apply all 7 groups (29 themes) matc
   assert.equal(rect1.getAttribute("rx"), "6");
   assert.equal(rect1.style.fill, "#3b4252");
   assert.equal(rect1.style.stroke, "#88c0d0");
+  assert.equal(svg.getAttribute("filter"), null);
+
+  // Custom nodeRadius override test
+  beautifySvgDom(svg, { ...DEFAULT_SETTINGS, theme: "nord", nodeRadius: 10 }, false);
+  assert.equal(rect1.getAttribute("rx"), "10");
+
+  // Re-apply handcrafted to verify wobble filter is not duplicated
+  beautifySvgDom(svg, { ...DEFAULT_SETTINGS, theme: "handcrafted" }, false);
+  assert.equal(svg.querySelectorAll("#mb-wobble").length, 1);
 
   // 3. Paper & print: Blueprint (grid background image + 0px corners)
   beautifySvgDom(svg, { ...DEFAULT_SETTINGS, theme: "blueprint" }, false);
