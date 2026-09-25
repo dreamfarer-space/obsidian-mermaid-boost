@@ -163,8 +163,9 @@ test("Idempotency: Re-enhancing the same Mermaid block produces exactly one stab
   global.ResizeObserver = MockResizeObserver;
 
   try {
-    const { block, svg } = createDiagramBlock({ naturalWidth: 320, naturalHeight: 900, containerWidth: 680 });
-    setupGlobalEnvironment([block]);
+    const { block, svg, host } = createDiagramBlock({ naturalWidth: 320, naturalHeight: 900, containerWidth: 680 });
+    const { body } = setupGlobalEnvironment([block]);
+    body.appendChild(host);
 
     const MermaidBoostPlugin = require("../src/main.js");
     const plugin = new MermaidBoostPlugin({}, {});
@@ -223,7 +224,8 @@ test("Idempotency: Repeated MutationObserver callbacks coalesce and remain stabl
     const { block: block1, svg: svg1 } = createDiagramBlock({ naturalWidth: 400, naturalHeight: 300 });
     const { block: block2, svg: svg2 } = createDiagramBlock({ naturalWidth: 500, naturalHeight: 400 });
     const container = createMockElement("div", { class: "markdown-preview-view" }, [block1, block2]);
-    setupGlobalEnvironment([block1, block2]);
+    const { body } = setupGlobalEnvironment([block1, block2]);
+    body.appendChild(container);
 
     let mutationCallback = null;
     global.MutationObserver = class {
@@ -300,7 +302,8 @@ test("Lifecycle: Switching between Reading View and Live Preview cleans up and r
       disconnect() {}
     };
 
-    setupGlobalEnvironment([readBlock, liveBlock]);
+    const { body } = setupGlobalEnvironment([readBlock, liveBlock]);
+    body.appendChild(readingView);
 
     const MermaidBoostPlugin = require("../src/main.js");
     const plugin = new MermaidBoostPlugin({}, {});
@@ -314,8 +317,13 @@ test("Lifecycle: Switching between Reading View and Live Preview cleans up and r
     assert.equal(readSvg.dataset.mbInitialized, "true");
     assert.equal(plugin._diagramObservers.has(readBlock), true);
     assert.equal(plugin._diagramObservers.size, 1);
+    assert.equal(readBlock.isConnected, true);
 
     // 2. Switch to Live Preview: Reading view is removed, Live Preview is mounted
+    readingView.remove();
+    body.appendChild(livePreview);
+    assert.equal(readBlock.isConnected, false);
+    assert.equal(liveBlock.isConnected, true);
     mutationCallback([
       { addedNodes: [], removedNodes: [readingView] },
       { addedNodes: [livePreview], removedNodes: [] },
@@ -330,6 +338,10 @@ test("Lifecycle: Switching between Reading View and Live Preview cleans up and r
     assert.equal(liveBlock.querySelectorAll(":scope > .mb-toolbar").length, 1);
 
     // 3. Switch back to Reading View: Live Preview removed, Reading View re-added
+    livePreview.remove();
+    body.appendChild(readingView);
+    assert.equal(liveBlock.isConnected, false);
+    assert.equal(readBlock.isConnected, true);
     mutationCallback([
       { addedNodes: [readingView], removedNodes: [livePreview] },
     ]);
@@ -366,7 +378,10 @@ test("Lifecycle: Removing/closing a note cleans up listeners and observers witho
       disconnect() {}
     };
 
-    setupGlobalEnvironment([b1, b2]);
+    const { body } = setupGlobalEnvironment([b1, b2]);
+    body.appendChild(noteContainer);
+    assert.equal(b1.isConnected, true);
+    assert.equal(b2.isConnected, true);
 
     const MermaidBoostPlugin = require("../src/main.js");
     const plugin = new MermaidBoostPlugin({}, {});
@@ -381,6 +396,9 @@ test("Lifecycle: Removing/closing a note cleans up listeners and observers witho
     assert.equal(b2.dataset.mbObserved, "true");
 
     // Close note -> noteContainer removed
+    noteContainer.remove();
+    assert.equal(b1.isConnected, false);
+    assert.equal(b2.isConnected, false);
     mutationCallback([{ addedNodes: [], removedNodes: [noteContainer] }]);
 
     // Both diagrams unobserved immediately
@@ -389,6 +407,7 @@ test("Lifecycle: Removing/closing a note cleans up listeners and observers witho
     assert.equal(b2.dataset.mbObserved, undefined);
 
     // Full plugin onunload restores pristine SVG state and clears listeners
+    body.appendChild(b1);
     plugin.decorateMermaidBlock(b1);
     assert.equal(s1.dataset.mbInitialized, "true");
     assert.equal(b1.classList.contains("mermaid-boost-card"), true);
@@ -416,8 +435,9 @@ test("User Interactions: Toolbar zoom controls and expand/collapse button work c
   global.ResizeObserver = MockResizeObserver;
 
   try {
-    const { block, svg } = createDiagramBlock({ naturalWidth: 320, naturalHeight: 900, containerWidth: 700 });
-    setupGlobalEnvironment([block]);
+    const { block, svg, host } = createDiagramBlock({ naturalWidth: 320, naturalHeight: 900, containerWidth: 700 });
+    const { body } = setupGlobalEnvironment([block]);
+    body.appendChild(host);
 
     const MermaidBoostPlugin = require("../src/main.js");
     const plugin = new MermaidBoostPlugin({}, {});
@@ -503,8 +523,9 @@ test("Lightbox: Fullscreen open, keyboard navigation, theme switching, and Escap
   global.ResizeObserver = MockResizeObserver;
 
   try {
-    const { block, svg } = createDiagramBlock({ naturalWidth: 640, naturalHeight: 360 });
+    const { block, svg, host } = createDiagramBlock({ naturalWidth: 640, naturalHeight: 360 });
     const { windowListeners, body } = setupGlobalEnvironment([block]);
+    body.appendChild(host);
 
     const MermaidBoostPlugin = require("../src/main.js");
     const plugin = new MermaidBoostPlugin({}, {});
@@ -548,8 +569,11 @@ test("Lightbox: Fullscreen open, keyboard navigation, theme switching, and Escap
     const themeBtn = overlay.querySelector(".mb-lightbox-theme-btn");
     assert.ok(themeBtn);
     const prevTheme = plugin.settings.theme;
-    await themeBtn.click();
+    const prevBtnText = themeBtn.textContent;
+    themeBtn.click();
+    await new Promise((resolve) => setImmediate(resolve));
     assert.notEqual(plugin.settings.theme, prevTheme);
+    assert.notEqual(themeBtn.textContent, prevBtnText, "Theme button label must update");
 
     // Press Escape to close lightbox
     global.window.dispatchEvent({ type: "keydown", key: "Escape" });
@@ -584,9 +608,11 @@ test("Theme changes update existing diagrams without duplicating UI controls", a
   global.ResizeObserver = MockResizeObserver;
 
   try {
-    const { block: b1, svg: s1 } = createDiagramBlock({ naturalWidth: 400, naturalHeight: 300 });
-    const { block: b2, svg: s2 } = createDiagramBlock({ naturalWidth: 500, naturalHeight: 800 });
+    const { block: b1, svg: s1, host: h1 } = createDiagramBlock({ naturalWidth: 400, naturalHeight: 300 });
+    const { block: b2, svg: s2, host: h2 } = createDiagramBlock({ naturalWidth: 500, naturalHeight: 800 });
     const { body } = setupGlobalEnvironment([b1, b2]);
+    body.appendChild(h1);
+    body.appendChild(h2);
 
     const MermaidBoostPlugin = require("../src/main.js");
     const plugin = new MermaidBoostPlugin({}, {});
@@ -632,7 +658,8 @@ test("Resize-driven sizing remains stable and narrow containers do not overflow"
       naturalHeight: 400,
       containerWidth: 800,
     });
-    setupGlobalEnvironment([block]);
+    const { body } = setupGlobalEnvironment([block]);
+    body.appendChild(host);
 
     const MermaidBoostPlugin = require("../src/main.js");
     const plugin = new MermaidBoostPlugin({}, {});

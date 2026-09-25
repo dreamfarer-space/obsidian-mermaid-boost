@@ -50,6 +50,13 @@ function createMockElement(tagName, attrs = {}, children = []) {
   });
 
   const childList = [];
+  const setConnected = (node, connected) => {
+    if (!node) return;
+    node.isConnected = connected;
+    for (const child of node.children || []) {
+      setConnected(child, connected);
+    }
+  };
 
   const el = {
     tagName: tagName.toUpperCase(),
@@ -157,6 +164,7 @@ function createMockElement(tagName, attrs = {}, children = []) {
       if (child) {
         child.parentElement = el;
         child.parentNode = el;
+        setConnected(child, Boolean(el.isConnected));
         childList.push(child);
       }
       return child;
@@ -168,6 +176,7 @@ function createMockElement(tagName, attrs = {}, children = []) {
       if (child) {
         child.parentElement = el;
         child.parentNode = el;
+        setConnected(child, Boolean(el.isConnected));
         const idx = referenceNode ? childList.indexOf(referenceNode) : -1;
         if (idx !== -1) {
           childList.splice(idx, 0, child);
@@ -186,6 +195,7 @@ function createMockElement(tagName, attrs = {}, children = []) {
         this.parentElement = null;
         this.parentNode = null;
       }
+      setConnected(this, false);
     },
     addEventListener(type, fn) {
       if (!listeners.has(type)) {
