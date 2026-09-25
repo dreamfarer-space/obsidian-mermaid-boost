@@ -4,9 +4,21 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const esbuild = require("esbuild");
+let esbuild;
+try {
+  esbuild = require("esbuild");
+} catch (_err) {
+  esbuild = null;
+}
 
-test("committed main.js bundle is up to date with src/ (no source-bundle drift)", async () => {
+test(
+  "committed main.js bundle is up to date with src/ (no source-bundle drift)",
+  {
+    skip: !esbuild
+      ? "esbuild is not installed in this environment (run npm install)"
+      : false,
+  },
+  async () => {
   const rootDir = path.resolve(__dirname, "..");
   const entryFile = path.join(rootDir, "src", "main.js");
   const bundleFile = path.join(rootDir, "main.js");
