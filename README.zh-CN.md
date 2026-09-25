@@ -201,7 +201,7 @@ node --check scripts/validate-plugin.js
 
 1. 同步更新 `manifest.json`、`package.json`、`versions.json`、`CHANGELOG.md`、`README.md` 与 `README.zh-CN.md` 中的版本信息。
 2. 本地运行 `npm test` 与 `npm run validate`，确保测试通过且元数据与文档无版本漂移。
-3. 推送与 `manifest.json` 完全一致的 `x.y.z` 标签（如 `git tag 1.0.2 && git push origin 1.0.2`），GitHub Actions 将自动执行测试、校验标签与元数据、打包 `mermaid-boost-<version>.zip` 并发布包含 `main.js`、`manifest.json`、`styles.css` 及 ZIP 压缩包的 GitHub Release。
+3. 推送与 `manifest.json` 完全一致的 `x.y.z` 标签（`TAG=$(node -p "require('./manifest.json').version") && git tag "$TAG" && git push origin "$TAG"`），GitHub Actions 将自动执行测试、校验标签与元数据、打包 `mermaid-boost-<version>.zip` 并发布包含 `main.js`、`manifest.json`、`styles.css` 及 ZIP 压缩包的 GitHub Release。
 
 ---
 

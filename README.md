@@ -201,7 +201,7 @@ node --check scripts/validate-plugin.js
 
 1. Update version metadata in `manifest.json`, `package.json`, `versions.json`, `CHANGELOG.md`, `README.md`, and `README.zh-CN.md`.
 2. Run `npm test` and `npm run validate` locally to verify schema and version synchronization.
-3. Push a matching semantic version tag (`git tag 1.0.2 && git push origin 1.0.2`). GitHub Actions automatically runs the test suite, validates release metadata against the tag, builds `mermaid-boost-<version>.zip`, and publishes `main.js`, `manifest.json`, `styles.css`, and the ZIP bundle to GitHub Releases.
+3. Push a matching semantic version tag (`TAG=$(node -p "require('./manifest.json').version") && git tag "$TAG" && git push origin "$TAG"`). GitHub Actions automatically runs the test suite, validates release metadata against the tag, builds `mermaid-boost-<version>.zip`, and publishes `main.js`, `manifest.json`, `styles.css`, and the ZIP bundle to GitHub Releases.
 
 ---
 
