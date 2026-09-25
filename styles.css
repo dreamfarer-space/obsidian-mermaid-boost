@@ -50,10 +50,10 @@ body.mermaid-boost-enabled .mermaid.mermaid-boost-card {
 /* Card Frame toggle: when disabled, remove border and background */
 body.mermaid-boost-enabled:not(.mermaid-boost-frame) .markdown-rendered .mermaid.mermaid-boost-card,
 body.mermaid-boost-enabled:not(.mermaid-boost-frame) .mermaid.mermaid-boost-card {
-  border-color: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-  box-shadow: none !important;
+  border-color: transparent;
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
 }
 
 /* Optional user Dot-grid background when theme has no intrinsic pattern */
@@ -68,37 +68,49 @@ body.mermaid-boost-enabled.mermaid-boost-dot-grid:not([data-mb-has-pattern="true
 }
 
 /* Per-diagram frame override classes */
+body.mermaid-boost-enabled.mermaid-boost-frame .markdown-rendered .mermaid.mermaid-boost-card.mb-no-frame,
+body.mermaid-boost-enabled.mermaid-boost-frame .mermaid.mermaid-boost-card.mb-no-frame,
 body.mermaid-boost-enabled .markdown-rendered .mermaid.mermaid-boost-card.mb-no-frame,
 body.mermaid-boost-enabled .mermaid.mermaid-boost-card.mb-no-frame {
-  border-color: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-  box-shadow: none !important;
+  border-color: transparent;
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
 }
 
 body.mermaid-boost-enabled:not(.mermaid-boost-frame) .markdown-rendered .mermaid.mermaid-boost-card.mb-has-frame,
-body.mermaid-boost-enabled:not(.mermaid-boost-frame) .mermaid.mermaid-boost-card.mb-has-frame {
-  border: 1px solid var(--mb-card-border, rgba(128, 128, 128, 0.3)) !important;
-  border-color: var(--mb-card-border, rgba(128, 128, 128, 0.3)) !important;
-  background-color: var(--mb-card-bg, #faf9f5) !important;
-  background-image: var(--mb-card-bg-image, none) !important;
-  background-size: var(--mb-card-bg-size, auto) !important;
+body.mermaid-boost-enabled:not(.mermaid-boost-frame) .mermaid.mermaid-boost-card.mb-has-frame,
+body.mermaid-boost-enabled .markdown-rendered .mermaid.mermaid-boost-card.mb-has-frame,
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card.mb-has-frame {
+  border: 1px solid var(--mb-card-border, rgba(128, 128, 128, 0.3));
+  border-color: var(--mb-card-border, rgba(128, 128, 128, 0.3));
+  background-color: var(--mb-card-bg, #faf9f5);
+  background-image: var(--mb-card-bg-image, none);
+  background-size: var(--mb-card-bg-size, auto);
 }
 
 /* Per-diagram grid override classes */
+body.mermaid-boost-enabled:not(.mermaid-boost-frame) .markdown-rendered .mermaid.mermaid-boost-card.mb-has-grid:not([data-mb-has-pattern="true"]),
+body.mermaid-boost-enabled:not(.mermaid-boost-frame) .mermaid.mermaid-boost-card.mb-has-grid:not([data-mb-has-pattern="true"]),
 body.mermaid-boost-enabled .markdown-rendered .mermaid.mermaid-boost-card.mb-has-grid:not([data-mb-has-pattern="true"]),
 body.mermaid-boost-enabled .mermaid.mermaid-boost-card.mb-has-grid:not([data-mb-has-pattern="true"]) {
   background-image: radial-gradient(
     var(--mb-grid-dot, rgba(128, 128, 128, 0.16)) 1.15px,
     transparent 1.15px
-  ) !important;
-  background-size: 16px 16px !important;
-  background-position: -1px -1px !important;
+  );
+  background-size: 16px 16px;
+  background-position: -1px -1px;
 }
 
+body.mermaid-boost-enabled.mermaid-boost-dot-grid:not([data-mb-has-pattern="true"]) .markdown-rendered .mermaid.mermaid-boost-card.mb-no-grid,
+body.mermaid-boost-enabled.mermaid-boost-dot-grid:not([data-mb-has-pattern="true"]) .mermaid.mermaid-boost-card.mb-no-grid,
+body.mermaid-boost-enabled.mermaid-boost-dot-grid .markdown-rendered .mermaid.mermaid-boost-card.mb-no-grid,
+body.mermaid-boost-enabled.mermaid-boost-dot-grid .mermaid.mermaid-boost-card.mb-no-grid,
 body.mermaid-boost-enabled .markdown-rendered .mermaid.mermaid-boost-card.mb-no-grid,
 body.mermaid-boost-enabled .mermaid.mermaid-boost-card.mb-no-grid {
-  background-image: var(--mb-card-bg-image, none) !important;
+  background-image: var(--mb-card-bg-image, none);
+  background-size: var(--mb-card-bg-size, auto);
+  background-position: 0 0;
 }
 
 /* 7-Group Interactive Theme Gallery in Settings Tab */
