@@ -172,6 +172,8 @@ function setupMockDocument(blocks = []) {
       if (sel === ".mermaid-boost-card") return blocks;
       return [];
     },
+    addEventListener: () => {},
+    removeEventListener: () => {},
     createElement(tag) {
       const node = {
         tagName: tag.toUpperCase(),
@@ -179,6 +181,9 @@ function setupMockDocument(blocks = []) {
         dataset: {},
         style: {},
         children: [],
+        set innerHTML(_value) {
+          this.children = [];
+        },
         setAttribute() {},
         addEventListener() {},
         remove() {},
@@ -244,6 +249,11 @@ test("Diagram width updates after dragging Obsidian split pane or toggling sideb
     plugin.decorateMermaidBlock(block);
     const initialWidth = parseInt(svg.style.width, 10);
     assert.ok(initialWidth > 350, `Expected wide initial width, got ${initialWidth}`);
+    const initialToolbar = block.querySelector(":scope > .mb-toolbar");
+    assert.ok(initialToolbar);
+    const initialBadge = initialToolbar.children.find((c) => c.className === "mb-badge");
+    assert.ok(initialBadge);
+    const initialBadgeText = initialBadge.textContent;
 
     const observer = MockResizeObserver.instances[0];
     assert.ok(observer);
@@ -268,6 +278,7 @@ test("Diagram width updates after dragging Obsidian split pane or toggling sideb
     const badge = toolbar.children.find((c) => c.className === "mb-badge");
     assert.ok(badge);
     assert.ok(badge.textContent.includes("Flowchart"));
+    assert.notEqual(badge.textContent, initialBadgeText);
 
     // 2. Simulate opening split pane wider (width back up to 800px)
     host.clientWidth = 800;
@@ -277,6 +288,61 @@ test("Diagram width updates after dragging Obsidian split pane or toggling sideb
 
     const restoredWidth = parseInt(svg.style.width, 10);
     assert.equal(restoredWidth, initialWidth);
+  } finally {
+    restoreObsidian();
+    delete global.ResizeObserver;
+    delete global.document;
+  }
+});
+
+test("Resize batch timer coalesces rapid triggers and runs updateDiagramSizing once after debounce timer elapses", async () => {
+  const restoreObsidian = setupObsidianMock();
+  MockResizeObserver.instances = [];
+  global.ResizeObserver = MockResizeObserver;
+
+  try {
+    const { block, svg, host } = createMockMermaidBlock({
+      naturalWidth: 640,
+      naturalHeight: 320,
+      containerWidth: 800,
+    });
+    setupMockDocument([block]);
+
+    const MermaidBoostPlugin = require("../src/main.js");
+    const plugin = new MermaidBoostPlugin({}, {});
+    await plugin.loadSettings();
+
+    plugin.decorateMermaidBlock(block);
+
+    let sizingCalls = 0;
+    const origUpdateSizing = plugin.updateDiagramSizing.bind(plugin);
+    plugin.updateDiagramSizing = (...args) => {
+      sizingCalls++;
+      return origUpdateSizing(...args);
+    };
+
+    const observer = MockResizeObserver.instances[0];
+    assert.ok(observer);
+
+    // Fire 5 rapid resize triggers simulating live sash dragging
+    host.clientWidth = 360;
+    block.clientWidth = 360;
+    observer.trigger([{ target: block, contentRect: { width: 420 } }]);
+    observer.trigger([{ target: block, contentRect: { width: 400 } }]);
+    observer.trigger([{ target: block, contentRect: { width: 380 } }]);
+    observer.trigger([{ target: block, contentRect: { width: 370 } }]);
+    observer.trigger([{ target: block, contentRect: { width: 360 } }]);
+
+    // Prior to timer completion, sizing should not have run synchronously
+    assert.equal(sizingCalls, 0);
+
+    // Wait beyond the 40ms debounce timer
+    await new Promise((resolve) => setTimeout(resolve, 75));
+
+    // Coalesced into a single execution
+    assert.equal(sizingCalls, 1);
+    const updatedWidth = parseInt(svg.style.width, 10);
+    assert.ok(updatedWidth <= 328);
   } finally {
     restoreObsidian();
     delete global.ResizeObserver;
@@ -311,8 +377,15 @@ test("Re-runs only sizing logic during resize instead of fully rebuilding or res
     host.clientWidth = 400;
     block.clientWidth = 400;
     const observer = MockResizeObserver.instances[0];
+    let decorateCalls = 0;
+    const origDecorate = plugin.decorateMermaidBlock.bind(plugin);
+    plugin.decorateMermaidBlock = (...args) => {
+      decorateCalls++;
+      return origDecorate(...args);
+    };
     observer.trigger([{ target: block, contentRect: { width: 400 } }]);
     plugin.flushResizeBatch();
+    assert.equal(decorateCalls, 0);
 
     // Sizing updated
     const resizedWidth = parseInt(svg.style.width, 10);
@@ -425,6 +498,61 @@ test("Observers are disconnected when diagrams disappear or plugin unloads", asy
   } finally {
     restoreObsidian();
     delete global.ResizeObserver;
+    delete global.document;
+  }
+});
+
+test("Restores observation and sizing without re-beautifying when an initialized diagram is reinserted into DOM", async () => {
+  const restoreObsidian = setupObsidianMock();
+  MockResizeObserver.instances = [];
+  global.ResizeObserver = MockResizeObserver;
+
+  try {
+    const { block } = createMockMermaidBlock({ containerWidth: 600 });
+    let mutationCb = null;
+    global.MutationObserver = class {
+      constructor(cb) {
+        mutationCb = cb;
+      }
+      observe() {}
+      disconnect() {}
+    };
+
+    setupMockDocument([block]);
+
+    const MermaidBoostPlugin = require("../src/main.js");
+    const plugin = new MermaidBoostPlugin({}, {});
+    await plugin.loadSettings();
+    plugin.setupMutationObserver();
+
+    // Initial decoration
+    plugin.decorateMermaidBlock(block);
+    assert.equal(plugin._diagramObservers.size, 1);
+
+    // Simulate node removed from DOM
+    mutationCb([{ removedNodes: [block], addedNodes: [] }]);
+    assert.equal(plugin._diagramObservers.size, 0);
+    assert.equal(block.dataset.mbObserved, undefined);
+
+    // Spy on decorateMermaidBlock to ensure full restyle is NOT run
+    let decorateCalls = 0;
+    const origDecorate = plugin.decorateMermaidBlock.bind(plugin);
+    plugin.decorateMermaidBlock = (...args) => {
+      decorateCalls++;
+      return origDecorate(...args);
+    };
+
+    // Simulate node reinserted into DOM
+    mutationCb([{ removedNodes: [], addedNodes: [block] }]);
+
+    // Observer and sizing are restored without re-decorating
+    assert.equal(decorateCalls, 0);
+    assert.equal(plugin._diagramObservers.size, 1);
+    assert.equal(block.dataset.mbObserved, "true");
+  } finally {
+    restoreObsidian();
+    delete global.ResizeObserver;
+    delete global.MutationObserver;
     delete global.document;
   }
 });

@@ -2178,13 +2178,16 @@ var MermaidBoostPlugin = class extends Plugin {
         }
       }, 50);
     };
+    const isElementNode = (node) => Boolean(
+      node && (node.nodeType === 1 || typeof HTMLElement !== "undefined" && node instanceof HTMLElement || typeof SVGElement !== "undefined" && node instanceof SVGElement || node.classList && typeof node.querySelector === "function")
+    );
     this.mutationObserver = new MutationObserver((mutations) => {
       if (this._isDecorating) return;
       let addedAny = false;
       for (const mutation of mutations) {
         if (mutation.removedNodes && mutation.removedNodes.length > 0) {
           for (const node of mutation.removedNodes) {
-            if (!(node instanceof HTMLElement || node instanceof SVGElement || node && node.nodeType === 1)) continue;
+            if (!isElementNode(node)) continue;
             if (node.classList && (node.classList.contains("mermaid") || node.classList.contains("mermaid-boost-card"))) {
               this.unobserveDiagram(node);
             } else if (typeof node.querySelectorAll === "function") {
@@ -2196,33 +2199,31 @@ var MermaidBoostPlugin = class extends Plugin {
           }
         }
         for (const node of mutation.addedNodes) {
-          if (!(node instanceof HTMLElement || node instanceof SVGElement)) continue;
+          if (!isElementNode(node)) continue;
           if (node.closest && node.closest(".mb-toolbar, .mb-expand-bar, .mb-lightbox-overlay, .mermaid-zoom-inline-controls, defs")) {
             continue;
           }
-          if (node instanceof HTMLElement && node.classList.contains("mermaid")) {
-            const svg = node.querySelector("svg");
-            if (svg && svg.dataset.mbInitialized !== "true") {
-              this._pendingBlocks.add(node);
+          const handleCandidate = (m) => {
+            const svg = m.querySelector("svg");
+            if (!svg) return;
+            if (svg.dataset && svg.dataset.mbInitialized !== "true") {
+              this._pendingBlocks.add(m);
               addedAny = true;
+            } else if (!this._diagramObservers || !this._diagramObservers.has(m)) {
+              this.updateDiagramSizing(m);
+              this.observeDiagram(m);
             }
+          };
+          if (node.classList && node.classList.contains("mermaid")) {
+            handleCandidate(node);
           } else {
             const parentMermaid = node.closest && node.closest(".mermaid");
             if (parentMermaid) {
-              const svg = parentMermaid.querySelector("svg");
-              if (svg && svg.dataset.mbInitialized !== "true") {
-                this._pendingBlocks.add(parentMermaid);
-                addedAny = true;
-              }
+              handleCandidate(parentMermaid);
             } else if (node.querySelectorAll) {
               const mermaids = node.querySelectorAll(".mermaid");
               for (let i = 0; i < mermaids.length; i++) {
-                const m = mermaids[i];
-                const svg = m.querySelector("svg");
-                if (svg && svg.dataset.mbInitialized !== "true") {
-                  this._pendingBlocks.add(m);
-                  addedAny = true;
-                }
+                handleCandidate(mermaids[i]);
               }
             }
           }
@@ -2238,7 +2239,7 @@ var MermaidBoostPlugin = class extends Plugin {
     });
     this._onCalloutClick = (e) => {
       const target = e.target;
-      if (target instanceof HTMLElement && target.closest(".callout-title, .callout-fold, summary")) {
+      if (isElementNode(target) && target.closest && target.closest(".callout-title, .callout-fold, summary")) {
         window.setTimeout(() => this.refreshAllMermaidBlocks(false), 120);
       }
     };
@@ -2330,6 +2331,11 @@ var MermaidBoostPlugin = class extends Plugin {
       }
     }
   }
+  /**
+   * Recomputes and applies responsive diagram sizing without full DOM or theme rebuilds.
+   * @param {HTMLElement} block - The Mermaid diagram card element.
+   * @param {number|null} [explicitContainerWidth=null] - Optional explicitly measured container width.
+   */
   updateDiagramSizing(block, explicitContainerWidth = null) {
     if (!block) return;
     const svg = block.querySelector("svg");
@@ -2406,6 +2412,12 @@ var MermaidBoostPlugin = class extends Plugin {
     }
     this.ensureToolbar(block, svg, diagramMeta, displayPercent, cardPresetKey);
   }
+  /**
+   * Attaches a dedicated ResizeObserver to a diagram card and its parent wrapper.
+   * Prevents duplicate observers and tracks lifecycle ownership.
+   * @param {HTMLElement} block - The Mermaid diagram card element to observe.
+   * @returns {ResizeObserver|null} The attached or existing observer instance, or null if unsupported.
+   */
   observeDiagram(block) {
     if (!block || typeof ResizeObserver === "undefined") return null;
     if (this._diagramObservers && this._diagramObservers.has(block)) {
@@ -2430,6 +2442,10 @@ var MermaidBoostPlugin = class extends Plugin {
     }
     return observer;
   }
+  /**
+   * Disconnects and cleans up the ResizeObserver attached to a diagram card.
+   * @param {HTMLElement} block - The Mermaid diagram card element to unobserve.
+   */
   unobserveDiagram(block) {
     if (!block) return;
     if (this._diagramObservers && this._diagramObservers.has(block)) {
@@ -2450,6 +2466,11 @@ var MermaidBoostPlugin = class extends Plugin {
     }
     delete block._mbObservedContainerWidth;
   }
+  /**
+   * Handles incoming ResizeObserver callback entries for a diagram block, queueing a debounced batch.
+   * @param {HTMLElement} block - The Mermaid diagram card associated with the resize event.
+   * @param {ResizeObserverEntry[]} entries - ResizeObserver entries for the observed targets.
+   */
   handleDiagramResize(block, entries) {
     if (!block || block.isConnected === false) {
       this.unobserveDiagram(block);
@@ -2468,6 +2489,9 @@ var MermaidBoostPlugin = class extends Plugin {
     this._pendingResizeBlocks.add(block);
     this.scheduleResizeBatch();
   }
+  /**
+   * Schedules a debounced batch flush for all pending diagram resize updates (40ms debounce).
+   */
   scheduleResizeBatch() {
     if (this._resizeBatchTimer) return;
     const setFn = typeof window !== "undefined" ? window.setTimeout : setTimeout;
@@ -2476,6 +2500,9 @@ var MermaidBoostPlugin = class extends Plugin {
       this.flushResizeBatch();
     }, 40);
   }
+  /**
+   * Synchronously flushes all pending diagram resize computations and applies sizing updates.
+   */
   flushResizeBatch() {
     if (this._resizeBatchTimer) {
       const clearFn = typeof window !== "undefined" ? window.clearTimeout : clearTimeout;
@@ -2496,12 +2523,19 @@ var MermaidBoostPlugin = class extends Plugin {
       }
     }
   }
+  /**
+   * Refreshes diagram sizing for all enhanced Mermaid cards via the debounced batch queue.
+   */
   refreshAllDiagramSizing() {
     if (this._isDecorating) return;
+    if (!this._pendingResizeBlocks) {
+      this._pendingResizeBlocks = /* @__PURE__ */ new Set();
+    }
     const blocks = document.querySelectorAll(".mermaid-boost-card");
     blocks.forEach((block) => {
-      this.updateDiagramSizing(block);
+      this._pendingResizeBlocks.add(block);
     });
+    this.scheduleResizeBatch();
   }
   ensureExpandBar(block, fullHeight, collapsedHeight) {
     let bar = block.querySelector(":scope > .mb-expand-bar");
