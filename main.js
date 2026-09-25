@@ -963,7 +963,10 @@ var require_sizing = __commonJS({
       const scaleH = maxHeight / natH;
       const idealScale = Math.min(baseScale, scaleW, scaleH);
       const readableFloor = Math.min(scaleW, Math.max(minReadableScale, idealScale));
-      const finalScale = Math.max(0.05, Math.min(1.5, readableFloor));
+      const finalScale = Math.min(
+        scaleW,
+        Math.max(0.05, Math.min(1.5, readableFloor))
+      );
       const renderWidth = Math.min(
         availableWidth,
         Math.max(Math.min(40, availableWidth), Math.round(natW * finalScale))

@@ -136,4 +136,15 @@ test("computeSmartDiagramSize scales down oversized diagrams while enforcing min
     120
   );
   assert.ok(sizeUltraNarrow.width <= 88, `Expected width <= 88 (120-32), got ${sizeUltraNarrow.width}`);
+
+  // 6. Huge diagram in narrow container where scaleW < 0.05 -> constrains finalScale to scaleW
+  const sizeHugeSquare = computeSmartDiagramSize(
+    { width: 1600, height: 1600 },
+    { type: "flowchart", orientation: "square" },
+    DEFAULT_SETTINGS,
+    40
+  );
+  assert.equal(sizeHugeSquare.scale, 0.025);
+  assert.equal(sizeHugeSquare.width, 40);
+  assert.equal(sizeHugeSquare.height, 40);
 });
