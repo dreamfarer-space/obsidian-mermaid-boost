@@ -30,7 +30,7 @@ body.mermaid-boost-enabled .mermaid.mermaid-boost-card {
   align-items: center;
   justify-content: center;
   width: fit-content;
-  min-width: 240px;
+  min-width: min(240px, 100%);
   max-width: 100%;
   margin: 0.75em auto;
   padding: 14px 14px 10px;

@@ -248,8 +248,8 @@ function computeSmartDiagramSize(naturalSize, diagramMeta, settings = {}, contai
   }
 
   const effectiveContainerW =
-    containerWidth && containerWidth > 140
-      ? Math.max(120, containerWidth - 32)
+    Number.isFinite(containerWidth) && containerWidth > 0
+      ? Math.max(40, containerWidth - (containerWidth > 80 ? 32 : 16))
       : maxWidth;
 
   const availableWidth = Math.min(maxWidth, effectiveContainerW);
@@ -259,9 +259,12 @@ function computeSmartDiagramSize(naturalSize, diagramMeta, settings = {}, contai
 
   const idealScale = Math.min(baseScale, scaleW, scaleH);
   const readableFloor = Math.min(scaleW, Math.max(minReadableScale, idealScale));
-  const finalScale = Math.max(0.15, Math.min(1.5, readableFloor));
+  const finalScale = Math.max(0.05, Math.min(1.5, readableFloor));
 
-  const renderWidth = Math.max(40, Math.round(natW * finalScale));
+  const renderWidth = Math.min(
+    availableWidth,
+    Math.max(Math.min(40, availableWidth), Math.round(natW * finalScale))
+  );
   const renderHeight = Math.max(30, Math.round(natH * finalScale));
 
   const needsHeightCollapse =

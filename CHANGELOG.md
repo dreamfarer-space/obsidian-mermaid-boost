@@ -2,6 +2,16 @@
 
 All notable changes to **Mermaid Boost** (`mermaid-boost`) are documented in this file.
 
+## [Unreleased]
+
+### Added
+- **Dynamic ResizeObserver Diagram Resizing**:
+  - Attached non-duplicate `ResizeObserver` instances to each enhanced Mermaid diagram container to respond dynamically to split pane dragging, sidebar open/close, mobile orientation changes, and workspace resize events.
+  - Implemented debounced event batching to eliminate layout thrashing.
+  - Re-run only sizing-related logic on resize instead of triggering full diagram card rebuilds or SVG restyling.
+  - Guaranteed clean observer teardown upon diagram disappearance and plugin unload.
+  - Reinforced narrow-container constraints and responsive min-width (`min(240px, 100%)`) to prevent mobile and narrow-pane overflow.
+
 ## [1.0.3] - 2026-09-25
 
 ### Added

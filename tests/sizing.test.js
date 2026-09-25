@@ -127,4 +127,13 @@ test("computeSmartDiagramSize scales down oversized diagrams while enforcing min
     280
   );
   assert.ok(sizeNarrow.width <= 248, `Expected width <= 248, got ${sizeNarrow.width}`);
+
+  // 5. Ultra-narrow pane/mobile split (width 120px) -> constrains down properly without overflow
+  const sizeUltraNarrow = computeSmartDiagramSize(
+    { width: 640, height: 260 },
+    { type: "flowchart", orientation: "horizontal" },
+    DEFAULT_SETTINGS,
+    120
+  );
+  assert.ok(sizeUltraNarrow.width <= 88, `Expected width <= 88 (120-32), got ${sizeUltraNarrow.width}`);
 });

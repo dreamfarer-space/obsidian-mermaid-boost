@@ -957,14 +957,17 @@ var require_sizing = __commonJS({
           maxWidth = Math.max(maxWidth, 640);
         }
       }
-      const effectiveContainerW = containerWidth && containerWidth > 140 ? Math.max(120, containerWidth - 32) : maxWidth;
+      const effectiveContainerW = Number.isFinite(containerWidth) && containerWidth > 0 ? Math.max(40, containerWidth - (containerWidth > 80 ? 32 : 16)) : maxWidth;
       const availableWidth = Math.min(maxWidth, effectiveContainerW);
       const scaleW = availableWidth / natW;
       const scaleH = maxHeight / natH;
       const idealScale = Math.min(baseScale, scaleW, scaleH);
       const readableFloor = Math.min(scaleW, Math.max(minReadableScale, idealScale));
-      const finalScale = Math.max(0.15, Math.min(1.5, readableFloor));
-      const renderWidth = Math.max(40, Math.round(natW * finalScale));
+      const finalScale = Math.max(0.05, Math.min(1.5, readableFloor));
+      const renderWidth = Math.min(
+        availableWidth,
+        Math.max(Math.min(40, availableWidth), Math.round(natW * finalScale))
+      );
       const renderHeight = Math.max(30, Math.round(natH * finalScale));
       const needsHeightCollapse = Boolean(merged.autoCollapseTall) && merged.sizePreset !== "original" && renderHeight > maxHeight * 1.12;
       return {
@@ -1938,9 +1941,16 @@ var MermaidBoostPlugin = class extends Plugin {
         this.refreshAllMermaidBlocks(true);
       })
     );
+    if (this.app && this.app.workspace && typeof this.app.workspace.on === "function") {
+      this.registerEvent(
+        this.app.workspace.on("resize", () => {
+          this.refreshAllDiagramSizing();
+        })
+      );
+    }
     this._onResize = () => {
       if (this._resizeTimer) window.clearTimeout(this._resizeTimer);
-      this._resizeTimer = window.setTimeout(() => this.refreshAllMermaidBlocks(), 150);
+      this._resizeTimer = window.setTimeout(() => this.refreshAllDiagramSizing(), 150);
     };
     window.addEventListener("resize", this._onResize);
     this.addCommand({
@@ -1972,6 +1982,28 @@ var MermaidBoostPlugin = class extends Plugin {
     }
     if (this._resizeTimer) {
       window.clearTimeout(this._resizeTimer);
+    }
+    if (this._resizeBatchTimer) {
+      const clearFn = typeof window !== "undefined" ? window.clearTimeout : clearTimeout;
+      clearFn(this._resizeBatchTimer);
+      this._resizeBatchTimer = null;
+    }
+    if (this._pendingResizeBlocks) {
+      this._pendingResizeBlocks.clear();
+    }
+    if (this._diagramObservers) {
+      for (const [block, observer] of this._diagramObservers.entries()) {
+        try {
+          if (observer && typeof observer.disconnect === "function") {
+            observer.disconnect();
+          }
+        } catch (_e) {
+        }
+        if (block && block.dataset) {
+          delete block.dataset.mbObserved;
+        }
+      }
+      this._diagramObservers.clear();
     }
     if (this._openLightboxes) {
       this._openLightboxes.forEach((close) => {
@@ -2060,7 +2092,9 @@ var MermaidBoostPlugin = class extends Plugin {
         delete block.dataset.mbOrientation;
         delete block.dataset.mbZoomFactor;
         delete block.dataset.mbPresetOverride;
+        delete block.dataset.mbObserved;
       }
+      this.unobserveDiagram(block);
     });
     if (typeof document !== "undefined" && document.body && document.body.dataset) {
       delete document.body.dataset.mbTheme;
@@ -2148,6 +2182,19 @@ var MermaidBoostPlugin = class extends Plugin {
       if (this._isDecorating) return;
       let addedAny = false;
       for (const mutation of mutations) {
+        if (mutation.removedNodes && mutation.removedNodes.length > 0) {
+          for (const node of mutation.removedNodes) {
+            if (!(node instanceof HTMLElement || node instanceof SVGElement || node && node.nodeType === 1)) continue;
+            if (node.classList && (node.classList.contains("mermaid") || node.classList.contains("mermaid-boost-card"))) {
+              this.unobserveDiagram(node);
+            } else if (typeof node.querySelectorAll === "function") {
+              const removedMermaids = node.querySelectorAll(".mermaid, .mermaid-boost-card");
+              for (let i = 0; i < removedMermaids.length; i++) {
+                this.unobserveDiagram(removedMermaids[i]);
+              }
+            }
+          }
+        }
         for (const node of mutation.addedNodes) {
           if (!(node instanceof HTMLElement || node instanceof SVGElement)) continue;
           if (node.closest && node.closest(".mb-toolbar, .mb-expand-bar, .mb-lightbox-overlay, .mermaid-zoom-inline-controls, defs")) {
@@ -2266,42 +2313,8 @@ var MermaidBoostPlugin = class extends Plugin {
       beautifySvgDom(svg, this.settings, this.isDarkMode());
       svg.dataset.mbStyledTheme = `${this.settings.theme}-${this.isDarkMode()}-${this.settings.multiToneNodes}-${this.settings.nodeRadius}`;
     }
-    const cardPresetKey = block.dataset.mbPresetOverride || this.settings.sizePreset;
-    const cardPreset = SIZE_PRESETS[cardPresetKey] || SIZE_PRESETS.compact;
-    const effectiveSettings = Object.assign({}, this.settings, {
-      sizePreset: cardPresetKey,
-      baseScale: block.dataset.mbPresetOverride ? cardPreset.baseScale : this.settings.baseScale,
-      maxHeight: block.dataset.mbPresetOverride ? cardPreset.maxHeight : this.settings.maxHeight,
-      maxWidth: block.dataset.mbPresetOverride ? cardPreset.maxWidth : this.settings.maxWidth,
-      minReadableScale: block.dataset.mbPresetOverride ? cardPreset.minReadableScale : this.settings.minReadableScale
-    });
-    const hostContainer = block.closest(".markdown-preview-sizer, .cm-content, .callout-content") || block.parentElement;
-    const containerWidth = hostContainer && hostContainer.clientWidth || block.clientWidth || 640;
-    const sizing = computeSmartDiagramSize(
-      effectiveNat,
-      diagramMeta,
-      effectiveSettings,
-      containerWidth
-    );
-    const userZoomFactor = parseFloat(block.dataset.mbZoomFactor || "1") || 1;
-    const finalWidth = Math.max(48, Math.round(sizing.width * userZoomFactor));
-    const finalHeight = Math.max(36, Math.round(sizing.height * userZoomFactor));
-    const displayPercent = Math.round(sizing.scale * userZoomFactor * 100);
-    svg.style.setProperty("width", `${finalWidth}px`, "important");
-    svg.style.setProperty("height", `${finalHeight}px`, "important");
-    svg.style.setProperty("max-width", "none", "important");
-    block.classList.toggle("is-mb-user-zoomed", Math.abs(userZoomFactor - 1) > 0.01);
-    const shouldCollapse = sizing.needsHeightCollapse && userZoomFactor <= 1.05;
-    block.classList.toggle("is-mb-collapsible", shouldCollapse);
-    if (shouldCollapse) {
-      block.style.setProperty("--mb-collapsed-height", `${sizing.collapsedHeight}px`);
-      this.ensureExpandBar(block, finalHeight, sizing.collapsedHeight);
-    } else {
-      block.classList.remove("is-mb-expanded");
-      const oldBar = block.querySelector(":scope > .mb-expand-bar");
-      if (oldBar) oldBar.remove();
-    }
-    this.ensureToolbar(block, svg, diagramMeta, displayPercent, cardPresetKey);
+    this.updateDiagramSizing(block);
+    this.observeDiagram(block);
     if (!svg.dataset.mbDblClickBound) {
       svg.dataset.mbDblClickBound = "true";
       const onDblClick = (e) => {
@@ -2316,6 +2329,179 @@ var MermaidBoostPlugin = class extends Plugin {
         svg.addEventListener("dblclick", onDblClick);
       }
     }
+  }
+  updateDiagramSizing(block, explicitContainerWidth = null) {
+    if (!block) return;
+    const svg = block.querySelector("svg");
+    if (!svg) return;
+    if (!svg.dataset || !svg.dataset.mbInitialized) {
+      this.decorateMermaidBlock(block, false);
+      return;
+    }
+    const origNat = extractSvgNaturalSize(svg);
+    if (!origNat) return;
+    const diagramMeta = detectDiagramType(svg, origNat);
+    let effectiveNat = origNat;
+    if (diagramMeta.type === "pie") {
+      if (this.settings.trimPiePadding) {
+        effectiveNat = tightenPieViewBox(svg, origNat);
+      } else if (svg.dataset.mbOrigViewBox) {
+        svg.setAttribute("viewBox", svg.dataset.mbOrigViewBox);
+      }
+    }
+    const cardPresetKey = block.dataset && block.dataset.mbPresetOverride || this.settings.sizePreset;
+    const cardPreset = SIZE_PRESETS[cardPresetKey] || SIZE_PRESETS.compact;
+    const effectiveSettings = Object.assign({}, this.settings, {
+      sizePreset: cardPresetKey,
+      baseScale: block.dataset && block.dataset.mbPresetOverride ? cardPreset.baseScale : this.settings.baseScale,
+      maxHeight: block.dataset && block.dataset.mbPresetOverride ? cardPreset.maxHeight : this.settings.maxHeight,
+      maxWidth: block.dataset && block.dataset.mbPresetOverride ? cardPreset.maxWidth : this.settings.maxWidth,
+      minReadableScale: block.dataset && block.dataset.mbPresetOverride ? cardPreset.minReadableScale : this.settings.minReadableScale
+    });
+    const hostContainer = typeof block.closest === "function" && block.closest(".markdown-preview-sizer, .cm-content, .callout-content") || block.parentElement;
+    const containerWidth = explicitContainerWidth || hostContainer && hostContainer.clientWidth || block._mbObservedContainerWidth || block.clientWidth || 640;
+    const sizing = computeSmartDiagramSize(
+      effectiveNat,
+      diagramMeta,
+      effectiveSettings,
+      containerWidth
+    );
+    const userZoomFactor = parseFloat(block.dataset && block.dataset.mbZoomFactor || "1") || 1;
+    const finalWidth = Math.max(48, Math.round(sizing.width * userZoomFactor));
+    const finalHeight = Math.max(36, Math.round(sizing.height * userZoomFactor));
+    const displayPercent = Math.round(sizing.scale * userZoomFactor * 100);
+    const targetW = `${finalWidth}px`;
+    const targetH = `${finalHeight}px`;
+    const curW = svg.style && (typeof svg.style.getPropertyValue === "function" ? svg.style.getPropertyValue("width") : svg.style.width);
+    const curH = svg.style && (typeof svg.style.getPropertyValue === "function" ? svg.style.getPropertyValue("height") : svg.style.height);
+    if (svg.style && (curW !== targetW || curH !== targetH || svg.style.maxWidth !== "none")) {
+      svg.style.setProperty("width", targetW, "important");
+      svg.style.setProperty("height", targetH, "important");
+      svg.style.setProperty("max-width", "none", "important");
+    }
+    if (block.classList) {
+      block.classList.toggle(
+        "is-mb-user-zoomed",
+        Math.abs(userZoomFactor - 1) > 0.01
+      );
+    }
+    const shouldCollapse = sizing.needsHeightCollapse && userZoomFactor <= 1.05;
+    if (block.classList) {
+      block.classList.toggle("is-mb-collapsible", shouldCollapse);
+    }
+    if (shouldCollapse) {
+      if (block.style && typeof block.style.setProperty === "function") {
+        block.style.setProperty(
+          "--mb-collapsed-height",
+          `${sizing.collapsedHeight}px`
+        );
+      }
+      this.ensureExpandBar(block, finalHeight, sizing.collapsedHeight);
+    } else {
+      if (block.classList) {
+        block.classList.remove("is-mb-expanded");
+      }
+      const oldBar = block.querySelector(":scope > .mb-expand-bar");
+      if (oldBar && typeof oldBar.remove === "function") oldBar.remove();
+    }
+    this.ensureToolbar(block, svg, diagramMeta, displayPercent, cardPresetKey);
+  }
+  observeDiagram(block) {
+    if (!block || typeof ResizeObserver === "undefined") return null;
+    if (this._diagramObservers && this._diagramObservers.has(block)) {
+      return this._diagramObservers.get(block);
+    }
+    if (!this._diagramObservers) {
+      this._diagramObservers = /* @__PURE__ */ new Map();
+    }
+    const observer = new ResizeObserver((entries) => {
+      this.handleDiagramResize(block, entries);
+    });
+    observer.observe(block);
+    if (block.parentElement && typeof document !== "undefined" && block.parentElement !== document.body && block.parentElement !== document.documentElement) {
+      try {
+        observer.observe(block.parentElement);
+      } catch (_e) {
+      }
+    }
+    this._diagramObservers.set(block, observer);
+    if (block.dataset) {
+      block.dataset.mbObserved = "true";
+    }
+    return observer;
+  }
+  unobserveDiagram(block) {
+    if (!block) return;
+    if (this._diagramObservers && this._diagramObservers.has(block)) {
+      const observer = this._diagramObservers.get(block);
+      if (observer && typeof observer.disconnect === "function") {
+        try {
+          observer.disconnect();
+        } catch (_e) {
+        }
+      }
+      this._diagramObservers.delete(block);
+    }
+    if (block.dataset) {
+      delete block.dataset.mbObserved;
+    }
+    if (this._pendingResizeBlocks) {
+      this._pendingResizeBlocks.delete(block);
+    }
+    delete block._mbObservedContainerWidth;
+  }
+  handleDiagramResize(block, entries) {
+    if (!block || block.isConnected === false) {
+      this.unobserveDiagram(block);
+      return;
+    }
+    if (entries && Array.isArray(entries)) {
+      for (const entry of entries) {
+        if (entry && entry.contentRect && Number.isFinite(entry.contentRect.width) && entry.contentRect.width > 0) {
+          block._mbObservedContainerWidth = entry.contentRect.width;
+        }
+      }
+    }
+    if (!this._pendingResizeBlocks) {
+      this._pendingResizeBlocks = /* @__PURE__ */ new Set();
+    }
+    this._pendingResizeBlocks.add(block);
+    this.scheduleResizeBatch();
+  }
+  scheduleResizeBatch() {
+    if (this._resizeBatchTimer) return;
+    const setFn = typeof window !== "undefined" ? window.setTimeout : setTimeout;
+    this._resizeBatchTimer = setFn(() => {
+      this._resizeBatchTimer = null;
+      this.flushResizeBatch();
+    }, 40);
+  }
+  flushResizeBatch() {
+    if (this._resizeBatchTimer) {
+      const clearFn = typeof window !== "undefined" ? window.clearTimeout : clearTimeout;
+      clearFn(this._resizeBatchTimer);
+      this._resizeBatchTimer = null;
+    }
+    if (!this._pendingResizeBlocks || this._pendingResizeBlocks.size === 0) return;
+    const batch = Array.from(this._pendingResizeBlocks);
+    this._pendingResizeBlocks.clear();
+    for (const b of batch) {
+      if (b && b.isConnected !== false) {
+        this.updateDiagramSizing(b);
+      } else if (b) {
+        this.unobserveDiagram(b);
+      }
+      if (b) {
+        delete b._mbObservedContainerWidth;
+      }
+    }
+  }
+  refreshAllDiagramSizing() {
+    if (this._isDecorating) return;
+    const blocks = document.querySelectorAll(".mermaid-boost-card");
+    blocks.forEach((block) => {
+      this.updateDiagramSizing(block);
+    });
   }
   ensureExpandBar(block, fullHeight, collapsedHeight) {
     let bar = block.querySelector(":scope > .mb-expand-bar");
@@ -2374,17 +2560,17 @@ var MermaidBoostPlugin = class extends Plugin {
     addIconBtn("minus", "Zoom Out", () => {
       const cur = parseFloat(block.dataset.mbZoomFactor || "1") || 1;
       block.dataset.mbZoomFactor = String(Math.max(0.4, Number((cur * 0.85).toFixed(2))));
-      this.decorateMermaidBlock(block);
+      this.updateDiagramSizing(block);
     });
     addIconBtn("plus", "Zoom In", () => {
       const cur = parseFloat(block.dataset.mbZoomFactor || "1") || 1;
       block.dataset.mbZoomFactor = String(Math.min(2.5, Number((cur * 1.18).toFixed(2))));
-      this.decorateMermaidBlock(block);
+      this.updateDiagramSizing(block);
     });
     addIconBtn("rotate-ccw", "Reset Size", () => {
       delete block.dataset.mbZoomFactor;
       delete block.dataset.mbPresetOverride;
-      this.decorateMermaidBlock(block);
+      this.updateDiagramSizing(block);
     });
     addIconBtn("palette", "Switch Theme", () => this.cycleTheme());
     addIconBtn("camera", "Copy HD PNG", () => {
