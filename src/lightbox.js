@@ -14,6 +14,13 @@ const { extractSvgNaturalSize } = require("./sizing.js");
 const { THEMES, nextThemeKey } = require("./themes.js");
 const { beautifySvgDom } = require("./beautify.js");
 
+/**
+ * Opens the diagram in an immersive fullscreen lightbox viewer with pan/zoom and action controls.
+ * @param {SVGElement} sourceSvg - The source diagram SVG to clone and view.
+ * @param {Object} diagramMeta - Metadata classifying diagram type, label, and natural dimensions.
+ * @param {Object} [options={}] - Lightbox actions and configuration options.
+ * @returns {Function} Close function to dismiss the fullscreen lightbox.
+ */
 function openFullscreenLightbox(sourceSvg, diagramMeta, options = {}) {
   const {
     settings = {},
@@ -98,7 +105,6 @@ function openFullscreenLightbox(sourceSvg, diagramMeta, options = {}) {
     b.type = "button";
     b.className = `mb-icon-btn ${extraCls}`;
     b.title = label;
-    b.setAttribute("aria-label", label);
     setIcon(b, icon);
     b.addEventListener("click", (e) => {
       e.stopPropagation();

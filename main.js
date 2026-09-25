@@ -1792,7 +1792,6 @@ var require_lightbox = __commonJS({
         b.type = "button";
         b.className = `mb-icon-btn ${extraCls}`;
         b.title = label;
-        b.setAttribute("aria-label", label);
         setIcon2(b, icon);
         b.addEventListener("click", (e) => {
           e.stopPropagation();
@@ -2672,9 +2671,11 @@ var MermaidBoostPlugin = class extends Plugin {
       }
     }
     let sectionOverrides = null;
+    const blockRegex = /```(?:mermaid)\s*\n([\s\S]*?)```/gi;
+    const blockMatches = sectionText ? Array.from(sectionText.matchAll(blockRegex)) : [];
     if (sectionText) {
       sectionOverrides = extractDirectivesFromText(sectionText);
-      if (Object.keys(sectionOverrides).length > 0) {
+      if (Object.keys(sectionOverrides).length > 0 && blockMatches.length <= 1) {
         el._mbDirectives = sectionOverrides;
         if (el.dataset) {
           el.dataset.mbDirectives = JSON.stringify(sectionOverrides);
@@ -2706,8 +2707,6 @@ var MermaidBoostPlugin = class extends Plugin {
     }
     if (mermaidBlocks.length === 0) return;
     if (sectionText) {
-      const blockRegex = /```(?:mermaid)\s*\n([\s\S]*?)```/gi;
-      const blockMatches = Array.from(sectionText.matchAll(blockRegex));
       if (blockMatches.length > 0 && blockMatches.length === mermaidBlocks.length) {
         for (let i = 0; i < mermaidBlocks.length; i++) {
           const rawCode = blockMatches[i][1];
@@ -2719,7 +2718,7 @@ var MermaidBoostPlugin = class extends Plugin {
             }
           }
         }
-      } else if (sectionOverrides && Object.keys(sectionOverrides).length > 0) {
+      } else if (blockMatches.length <= 1 && sectionOverrides && Object.keys(sectionOverrides).length > 0) {
         for (const b of mermaidBlocks) {
           b._mbDirectives = sectionOverrides;
           if (b.dataset) {

@@ -582,7 +582,7 @@ test("Per-diagram override: findDiagramTextFromEditor does not abort when first 
   const { findDiagramTextFromEditor } = require("../src/directive.js");
   const block = createMockElement("div");
 
-  // Candidate 1: throws or doesn't contain block
+  // Candidate 1: does not contain block (exercises skipping before posAtDOM)
   const leaf1 = {
     editor: {
       cm: {
@@ -595,7 +595,20 @@ test("Per-diagram override: findDiagramTextFromEditor does not abort when first 
     },
   };
 
-  // Candidate 2: contains block and returns text
+  // Candidate 2: contains block but posAtDOM throws (exercises local catch recovery)
+  const leafThrows = {
+    editor: {
+      cm: {
+        dom: { contains: () => true },
+        posAtDOM: () => {
+          throw new RangeError("Not in DOM");
+        },
+        state: { doc: {} },
+      },
+    },
+  };
+
+  // Candidate 3: contains block and returns text (exercises successful extraction)
   const docText = "```mermaid\n%% mermaid-boost: theme=dracula\ngraph TD\nA-->B\n```";
   const leaf2 = {
     editor: {
@@ -625,7 +638,7 @@ test("Per-diagram override: findDiagramTextFromEditor does not abort when first 
   const appMock = {
     workspace: {
       getActiveViewOfType: () => leaf1,
-      getLeavesOfType: () => [leaf1, leaf2],
+      getLeavesOfType: () => [leaf1, leafThrows, leaf2],
     },
   };
 
