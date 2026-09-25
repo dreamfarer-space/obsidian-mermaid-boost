@@ -49,6 +49,9 @@ test("MermaidBoostPlugin main.js decorates .mermaid blocks, applies compact sizi
     svg.style.setProperty = function (k, v) {
       this[k] = v;
     };
+    svg.style.removeProperty = function (k) {
+      delete this[k];
+    };
     svg.addEventListener = () => {};
 
     const addedChildren = [];
@@ -97,8 +100,12 @@ test("MermaidBoostPlugin main.js decorates .mermaid blocks, applies compact sizi
         },
         style: { setProperty: () => {} },
       },
+      querySelectorAll(sel) {
+        if (sel === ".mermaid-boost-card") return [block];
+        return [];
+      },
       createElement(tag) {
-        return {
+        const node = {
           tagName: tag.toUpperCase(),
           className: "",
           dataset: {},
@@ -106,11 +113,16 @@ test("MermaidBoostPlugin main.js decorates .mermaid blocks, applies compact sizi
           children: [],
           setAttribute() {},
           addEventListener() {},
+          remove() {
+            const idx = addedChildren.indexOf(node);
+            if (idx !== -1) addedChildren.splice(idx, 1);
+          },
           appendChild(c) {
             this.children.push(c);
             return c;
           },
         };
+        return node;
       },
     };
 
@@ -121,8 +133,21 @@ test("MermaidBoostPlugin main.js decorates .mermaid blocks, applies compact sizi
     assert.equal(svg.style.width, "166px");
     assert.equal(svg.style.height, "780px");
     assert.equal(svg.style["max-width"], "none");
+    assert.equal(svg.dataset.mbInitialized, "true");
     assert.ok(addedChildren.some((c) => c.className === "mb-toolbar"));
     assert.ok(addedChildren.some((c) => c.className === "mb-expand-bar"));
+
+    // Test lifecycle unload cleanup
+    plugin.onunload();
+    assert.equal(svg.dataset.mbInitialized, undefined);
+    assert.equal(svg.dataset.mbOrigViewBox, undefined);
+    assert.equal(svg.dataset.mbDblClickBound, undefined);
+    assert.equal(block.classList.contains("mermaid-boost-card"), false);
+
+    // Test re-decoration after unload recaches and decorates cleanly
+    plugin.decorateMermaidBlock(block);
+    assert.equal(svg.dataset.mbInitialized, "true");
+    assert.equal(block.classList.contains("mermaid-boost-card"), true);
   } finally {
     Module._load = origLoad;
     delete global.document;

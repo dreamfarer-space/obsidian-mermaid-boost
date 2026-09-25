@@ -111,6 +111,7 @@ class MermaidBoostPlugin extends Plugin {
         if (svg.dataset.mbOrigViewBox) {
           svg.setAttribute("viewBox", svg.dataset.mbOrigViewBox);
         }
+        delete svg.dataset.mbInitialized;
         delete svg.dataset.mbDblClickBound;
         delete svg.dataset.mbOrigViewBox;
         delete svg.dataset.mbNaturalWidth;
@@ -119,11 +120,23 @@ class MermaidBoostPlugin extends Plugin {
         delete svg.dataset.mbNaturalY;
         delete svg.dataset.mbViewBoxPadded;
         delete svg.dataset.mbStyledTheme;
-        svg.style.removeProperty("width");
-        svg.style.removeProperty("height");
-        svg.style.removeProperty("max-width");
+        if (svg.style && typeof svg.style.removeProperty === "function") {
+          svg.style.removeProperty("width");
+          svg.style.removeProperty("height");
+          svg.style.removeProperty("max-width");
+        }
+      }
+      if (block.dataset) {
+        delete block.dataset.mbDiagramType;
+        delete block.dataset.mbOrientation;
+        delete block.dataset.mbZoomFactor;
+        delete block.dataset.mbPresetOverride;
       }
     });
+    if (typeof document !== "undefined" && document.body && document.body.dataset) {
+      delete document.body.dataset.mbTheme;
+      delete document.body.dataset.mbHasPattern;
+    }
   }
 
   async cycleTheme() {
