@@ -35,7 +35,11 @@ function readJson(rootDir, relativePath) {
   if (!fs.existsSync(fullPath)) {
     throw new Error(`Missing required file: ${relativePath}`);
   }
-  return JSON.parse(fs.readFileSync(fullPath, "utf8"));
+  try {
+    return JSON.parse(fs.readFileSync(fullPath, "utf8"));
+  } catch (err) {
+    throw new Error(`Invalid JSON in ${relativePath}: ${err.message}`);
+  }
 }
 
 function validateManifestSchema(manifest) {

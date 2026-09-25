@@ -459,17 +459,21 @@ test("validatePluginMetadata passes for current repository and detects schema/ve
   const repoResult = validatePluginMetadata({
     releaseTag: process.env.RELEASE_TAG || currentManifest.version,
   });
-  assert.equal(repoResult.id, "mermaid-boost");
+  assert.equal(repoResult.id, currentManifest.id);
   assert.equal(repoResult.version, currentManifest.version);
-  assert.equal(repoResult.minAppVersion, "1.5.0");
+  assert.equal(repoResult.minAppVersion, currentManifest.minAppVersion);
+
+  const [major, minor, patch] = currentManifest.version.split(".").map(Number);
+  const mismatchedTag = `${major}.${minor}.${patch + 1}`;
+  const staleVersion = `${major}.${minor}.${patch + 1}`;
 
   assert.throws(
     () =>
       validateManifestSchema({
         id: "mermaid-boost",
         name: "Mermaid Boost",
-        version: "1.0.2-beta.1",
-        minAppVersion: "1.5.0",
+        version: `${currentManifest.version}-beta.1`,
+        minAppVersion: currentManifest.minAppVersion,
         description: "desc",
         author: "author",
         isDesktopOnly: false,
@@ -482,8 +486,8 @@ test("validatePluginMetadata passes for current repository and detects schema/ve
       validateManifestSchema({
         id: null,
         name: "Mermaid Boost",
-        version: "1.0.2",
-        minAppVersion: "1.5.0",
+        version: currentManifest.version,
+        minAppVersion: currentManifest.minAppVersion,
         description: "desc",
         author: "author",
         isDesktopOnly: false,
@@ -492,12 +496,12 @@ test("validatePluginMetadata passes for current repository and detects schema/ve
   );
 
   assert.throws(
-    () => validatePluginMetadata({ releaseTag: "v1.0.2" }),
-    /Release tag "v1\.0\.2" must strictly match x\.y\.z/
+    () => validatePluginMetadata({ releaseTag: `v${currentManifest.version}` }),
+    /must strictly match x\.y\.z/
   );
 
   assert.throws(
-    () => validatePluginMetadata({ releaseTag: "1.0.3" }),
+    () => validatePluginMetadata({ releaseTag: mismatchedTag }),
     /does not match manifest\.json version/
   );
 
@@ -517,14 +521,23 @@ test("validatePluginMetadata passes for current repository and detects schema/ve
       fs.copyFileSync(path.join(__dirname, f), path.join(tmpDir, f));
     }
 
-    const readmeStale = fs
-      .readFileSync(path.join(tmpDir, "README.md"), "utf8")
-      .replace("(`1.0.2`, `minAppVersion: 1.5.0`)", "(`1.0.1`, `minAppVersion: 1.5.0`)");
+    const currentRow = `(\`${currentManifest.version}\`, \`minAppVersion: ${currentManifest.minAppVersion}\`)`;
+    const originalReadme = fs.readFileSync(path.join(tmpDir, "README.md"), "utf8");
+    assert.ok(originalReadme.includes(currentRow), "README fixture row not found");
+
+    const readmeStale = originalReadme.replace(
+      currentRow,
+      `(\`${staleVersion}\`, \`minAppVersion: ${currentManifest.minAppVersion}\`)`
+    );
     fs.writeFileSync(path.join(tmpDir, "README.md"), readmeStale, "utf8");
 
     assert.throws(
       () => validatePluginMetadata({ rootDir: tmpDir }),
-      /README\.md repository structure row for manifest\.json does not reference current version 1\.0\.2/
+      (err) =>
+        err instanceof Error &&
+        err.message.includes(
+          `README.md repository structure row for manifest.json does not reference current version ${currentManifest.version}`
+        )
     );
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
