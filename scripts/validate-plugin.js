@@ -139,11 +139,13 @@ function validateChangelogSync(rootDir, version) {
     throw new Error("Missing required file: CHANGELOG.md");
   }
   const content = fs.readFileSync(changelogPath, "utf8");
-  const escapedVersion = version.replace(/\./g, "\\.");
-  const headingRe = new RegExp(`^##\\s+\\[${escapedVersion}\\]`, "m");
-  if (!headingRe.test(content)) {
+  const expectedPrefix = `## [${version}]`;
+  const hasReleaseHeading = content
+    .split(/\r?\n/)
+    .some((line) => line.trim().startsWith(expectedPrefix));
+  if (!hasReleaseHeading) {
     throw new Error(
-      `CHANGELOG.md is missing a release section heading for current version: ## [${version}]`
+      `CHANGELOG.md is missing a release section heading for current version: ${expectedPrefix}`
     );
   }
 }
