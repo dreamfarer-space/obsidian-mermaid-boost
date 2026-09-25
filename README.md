@@ -169,9 +169,21 @@ Configure all options under **Obsidian Settings → Mermaid Boost**:
 
 ## Development
 
-Mermaid Boost ships zero-build ES/CommonJS runtime JavaScript directly so you can inspect, test, and hack on it immediately.
+Mermaid Boost uses a modular source architecture in `src/` and generates the distributable runtime bundle `main.js` with `esbuild`.
 
 ```bash
+# Install development dependencies
+npm install
+
+# Build the distributable main.js bundle
+npm run build
+
+# Watch mode for interactive development
+npm run dev
+
+# Verify the committed main.js bundle is up to date with src/
+npm run build:check
+
 # Run the Node.js unit test suite (requires Node.js 22+)
 npm test
 
@@ -180,18 +192,37 @@ npm run validate
 
 # Run syntax validation
 node --check main.js
-node --check lib.js
-node --check lib.test.js
+node --check scripts/build.js
 node --check scripts/validate-plugin.js
+node --check src/main.js
+node --check src/settings.js
+node --check src/sizing.js
+node --check src/themes.js
+node --check src/beautify.js
+node --check src/lightbox.js
+node --check src/export.js
+node --check tests/helpers.js
+node --check tests/sizing.test.js
+node --check tests/themes.test.js
+node --check tests/beautify.test.js
+node --check tests/plugin.test.js
+node --check tests/validation.test.js
 ```
 
 ### Repository Structure
 
-| File | Responsibility |
+| File / Directory | Responsibility |
 | :--- | :--- |
-| `main.js` | Obsidian plugin lifecycle, DOM observer, toolbar controls, lightbox, HD PNG export & settings tab |
-| `lib.js` | Pure sizing engine (`SIZE_PRESETS`), 29 theme palettes (`THEMES`), and SVG beautification pipeline |
-| `lib.test.js` | Automated Node test suite verifying sizing math, theme integrity, and SVG post-processing |
+| `src/main.js` | Obsidian plugin entry point, lifecycle management, DOM observer, and block decoration |
+| `src/settings.js` | Settings presets (`SIZE_PRESETS`), `DEFAULT_SETTINGS`, and Obsidian `PluginSettingTab` |
+| `src/sizing.js` | Sizing calculation engine, diagram type detection, and pie padding tightening |
+| `src/themes.js` | 29 theme palettes (`THEMES`), theme groups (`THEME_GROUPS`), and theme spec resolver |
+| `src/beautify.js` | SVG DOM beautification pipeline, node styling, and topology classifier |
+| `src/lightbox.js` | Interactive fullscreen pan/zoom lightbox modal with controls |
+| `src/export.js` | 3x HD PNG export engine and live CSS color resolution |
+| `tests/` | Automated unit and integration test suite (`sizing`, `themes`, `beautify`, `plugin`, `validation`) |
+| `main.js` | Generated standalone distribution bundle for Obsidian |
+| `scripts/build.js` | Fast bundling script using `esbuild` with `--check` and `--watch` support |
 | `scripts/validate-plugin.js` | Metadata schema, release tag, and documentation version consistency validator |
 | `styles.css` | Card containers, toolbar buttons, fullscreen lightbox modal, and theme CSS rules |
 | `manifest.json` | Obsidian plugin manifest metadata (`1.0.2`, `minAppVersion: 1.5.0`) |
@@ -200,13 +231,13 @@ node --check scripts/validate-plugin.js
 ### Release Process
 
 1. Update version metadata in `manifest.json`, `package.json`, `versions.json`, `CHANGELOG.md`, `README.md`, and `README.zh-CN.md`.
-2. Run `npm test` and `npm run validate` locally to verify schema and version synchronization.
+2. Run `npm run build`, `npm run build:check`, `npm test`, and `npm run validate` locally to verify bundle freshness, tests, schema, and version synchronization.
 3. Push a matching semantic version tag (`TAG=$(node -p "require('./manifest.json').version") && git tag "$TAG" && git push origin "$TAG"`). GitHub Actions automatically runs the test suite, validates release metadata against the tag, builds `mermaid-boost-<version>.zip`, and publishes `main.js`, `manifest.json`, `styles.css`, and the ZIP bundle to GitHub Releases.
 
 ---
 
 ## Contributing & License
 
-Issues and Pull Requests are welcome! When modifying sizing math or theme definitions in `lib.js`, please run `npm test` to ensure all assertions pass.
+Issues and Pull Requests are welcome! When modifying sizing math, themes, or plugin behavior in `src/`, please run `npm run build`, `npm run build:check`, `npm test`, and `npm run validate` to ensure all assertions pass and the bundle remains in sync.
 
 Released under the **[MIT License](LICENSE)**.
