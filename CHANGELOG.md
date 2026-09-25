@@ -2,6 +2,31 @@
 
 All notable changes to **Mermaid Boost** (`mermaid-boost`) are documented in this file.
 
+## [1.0.3] - 2026-09-25
+
+### Added
+- **Modularized Source Architecture**:
+  - Restructured monolithic source and test suites into clean, single-responsibility modules in `src/` (`themes.js`, `sizing.js`, `beautify.js`, `export.js`, `lightbox.js`, `settings.js`, `main.js`) and `tests/`.
+  - Added modern `scripts/build.js` bundle pipeline via `esbuild` with `--check` and `--watch` options, maintaining full backward compatibility through `lib.js`.
+  - Added CI build verification (`npm run build:check`) to prevent source-bundle drift.
+- **Dedicated Card Frame & Dot Grid Controls**:
+  - Added separate settings toggle for **Card Frame** and **Dot Grid**, supporting borderless and transparent container modes when card frame is toggled off.
+
+### Changed
+- **Graph Topology Optimization**:
+  - Replaced $O(E \cdot N^2)$ edge scanning in `classifyGraphTopology` with standard Mermaid edge pattern regex fast-paths and early termination.
+  - Skipped graph topology classification when multi-tone hierarchy and node color mapping are not active.
+- **Dynamic ViewBox HD PNG Export**:
+  - Export sizing now prioritizes active, tightened SVG `viewBox` over static natural dimensions.
+- **Node Corner Radius Setting Precedence**:
+  - Allowed user-configured "Node Corner Radius" settings slider to properly override theme defaults.
+- **Unified Theme Cycling**:
+  - Consolidated theme rotation across command palette, card floating toolbar, and fullscreen lightbox into a shared `cycleTheme()` workflow.
+- **Clean Plugin Lifecycle Teardown**:
+  - Managed SVG double-click fullscreen listener via Obsidian's `registerDomEvent` to guarantee leak-free teardown.
+  - Automatically tracked and closed active fullscreen lightbox instances upon plugin unload.
+  - Fully restored original SVG inline dimensions/priorities (`width`, `height`, `max-width`) and cleaned up all dataset flags (`mbInitialized`, `mbOrigViewBox`, etc.) on unload.
+
 ## [1.0.2] - 2026-09-24
 
 ### Added
