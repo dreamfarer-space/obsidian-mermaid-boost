@@ -98,6 +98,7 @@ function openFullscreenLightbox(sourceSvg, diagramMeta, options = {}) {
     b.type = "button";
     b.className = `mb-icon-btn ${extraCls}`;
     b.title = label;
+    b.setAttribute("aria-label", label);
     setIcon(b, icon);
     b.addEventListener("click", (e) => {
       e.stopPropagation();

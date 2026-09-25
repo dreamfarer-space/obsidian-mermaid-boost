@@ -441,3 +441,194 @@ test("Per-diagram override: malformed and unknown directives degrade gracefully 
     delete global.window;
   }
 });
+
+test("Per-diagram override: block.dataset.mbPresetOverride affects sizing via computeSmartDiagramSize", async () => {
+  const restoreObsidian = setupObsidianMock();
+  MockResizeObserver.instances = [];
+  global.ResizeObserver = MockResizeObserver;
+
+  try {
+    const { block, svg, host } = createDiagramBlock({ naturalWidth: 400, naturalHeight: 800 });
+    const { body } = setupGlobalEnvironment([block]);
+    body.appendChild(host);
+
+    const MermaidBoostPlugin = require("../src/main.js");
+    const plugin = new MermaidBoostPlugin({}, {});
+    await plugin.loadSettings();
+
+    // Default sizing in compact preset (baseScale: 0.90)
+    plugin.decorateMermaidBlock(block);
+    const compactWidth = svg.style.getPropertyValue("width");
+
+    // Override card preset to 'relaxed' (baseScale: 1.15)
+    block.dataset.mbPresetOverride = "relaxed";
+    plugin.updateDiagramSizing(block);
+    const relaxedWidth = svg.style.getPropertyValue("width");
+
+    // Overridden preset should produce larger width
+    assert.notEqual(compactWidth, relaxedWidth);
+    assert.equal(parseInt(relaxedWidth, 10) > parseInt(compactWidth, 10), true);
+  } finally {
+    restoreObsidian();
+    delete global.ResizeObserver;
+    delete global.document;
+    delete global.window;
+  }
+});
+
+test("Per-diagram override: openFullscreenLightbox passes effectiveSettings to exportSvgAsPng", async () => {
+  const restoreObsidian = setupObsidianMock();
+  MockResizeObserver.instances = [];
+  global.ResizeObserver = MockResizeObserver;
+
+  try {
+    const { block, svg, host } = createDiagramBlock();
+    const { body } = setupGlobalEnvironment([block]);
+    body.appendChild(host);
+
+    const MermaidBoostPlugin = require("../src/main.js");
+    const plugin = new MermaidBoostPlugin({}, {});
+    await plugin.loadSettings();
+
+    block.dataset.mbDirective = "theme=dracula size=relaxed";
+    plugin.decorateMermaidBlock(block);
+
+    let capturedSettings = null;
+    const origExport = plugin.exportSvgAsPng.bind(plugin);
+    plugin.exportSvgAsPng = async (targetSvg, explicitSettings = null) => {
+      capturedSettings = explicitSettings;
+      return origExport(targetSvg, explicitSettings);
+    };
+
+    const closeLightbox = plugin.openFullscreenLightbox(svg, { type: "flowchart" });
+
+    // Find the lightbox copy button and trigger click
+    const overlays = body.querySelectorAll(".mb-lightbox-overlay");
+    assert.equal(overlays.length > 0, true);
+    const buttons = overlays[0].querySelectorAll("button");
+    const copyBtn = buttons.find(
+      (b) =>
+        (b.title && b.title.includes("Copy")) ||
+        (b.getAttribute("aria-label") && b.getAttribute("aria-label").includes("Copy"))
+    );
+    assert.equal(Boolean(copyBtn), true);
+    copyBtn.click();
+
+    assert.equal(capturedSettings !== null, true);
+    assert.equal(capturedSettings.theme, "dracula");
+    assert.equal(capturedSettings.sizePreset, "relaxed");
+
+    if (typeof closeLightbox === "function") closeLightbox();
+  } finally {
+    restoreObsidian();
+    delete global.ResizeObserver;
+    delete global.document;
+    delete global.window;
+  }
+});
+
+test("Per-diagram override: post-processor attaches directives to section container before .mermaid renders", async () => {
+  const restoreObsidian = setupObsidianMock();
+  MockResizeObserver.instances = [];
+  global.ResizeObserver = MockResizeObserver;
+
+  try {
+    const host = createMockElement("div", { class: "block-language-mermaid" });
+    const { body } = setupGlobalEnvironment([]);
+    body.appendChild(host);
+
+    const MermaidBoostPlugin = require("../src/main.js");
+    const plugin = new MermaidBoostPlugin({}, {});
+    await plugin.loadSettings();
+
+    const markdownDoc = `
+\`\`\`mermaid
+%% mermaid-boost: theme=nord size=relaxed
+flowchart LR
+  A --> B
+\`\`\`
+`;
+    // Post processor runs on container before Mermaid has rendered .mermaid
+    plugin.handleMarkdownPostProcessor(host, {
+      getSectionInfo: () => ({
+        text: markdownDoc,
+        lineStart: 1,
+        lineEnd: 5,
+      }),
+    });
+
+    // Host has directives stored
+    assert.equal(host.dataset.mbDirectives !== undefined, true);
+    const parsedOnHost = JSON.parse(host.dataset.mbDirectives);
+    assert.equal(parsedOnHost.theme, "nord");
+
+    // Later Mermaid renders .mermaid child inside host
+    const { block } = createDiagramBlock();
+    host.appendChild(block);
+
+    const { extractDirectiveFromElement } = require("../src/directive.js");
+    const overrides = extractDirectiveFromElement(block);
+    assert.equal(overrides.theme, "nord");
+    assert.equal(overrides.size, "relaxed");
+  } finally {
+    restoreObsidian();
+    delete global.ResizeObserver;
+    delete global.document;
+    delete global.window;
+  }
+});
+
+test("Per-diagram override: findDiagramTextFromEditor does not abort when first candidate fails or does not contain block", () => {
+  const { findDiagramTextFromEditor } = require("../src/directive.js");
+  const block = createMockElement("div");
+
+  // Candidate 1: throws or doesn't contain block
+  const leaf1 = {
+    editor: {
+      cm: {
+        dom: { contains: () => false },
+        posAtDOM: () => {
+          throw new RangeError("Not in DOM");
+        },
+        state: { doc: {} },
+      },
+    },
+  };
+
+  // Candidate 2: contains block and returns text
+  const docText = "```mermaid\n%% mermaid-boost: theme=dracula\ngraph TD\nA-->B\n```";
+  const leaf2 = {
+    editor: {
+      cm: {
+        dom: { contains: () => true },
+        posAtDOM: () => 15,
+        state: {
+          doc: {
+            lines: 5,
+            lineAt: () => ({ number: 3 }),
+            line: (n) => {
+              const lines = docText.split("\n");
+              return {
+                number: n,
+                text: lines[n - 1] || "",
+                from: 0,
+                to: docText.length,
+              };
+            },
+            sliceString: () => docText,
+          },
+        },
+      },
+    },
+  };
+
+  const appMock = {
+    workspace: {
+      getActiveViewOfType: () => leaf1,
+      getLeavesOfType: () => [leaf1, leaf2],
+    },
+  };
+
+  const result = findDiagramTextFromEditor(block, appMock);
+  assert.equal(result, docText);
+});

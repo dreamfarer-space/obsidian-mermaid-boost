@@ -224,22 +224,26 @@ function extractDirectivesFromText(text) {
  */
 function findDiagramTextFromEditor(block, app) {
   if (!block || !app || !app.workspace) return null;
-  try {
-    const activeView =
-      typeof app.workspace.getActiveViewOfType === "function"
-        ? app.workspace.getActiveViewOfType(app.workspace.MarkdownView || Object)
-        : null;
-    const leaves =
-      typeof app.workspace.getLeavesOfType === "function"
-        ? app.workspace.getLeavesOfType("markdown")
-        : [];
-    const candidates = activeView ? [activeView, ...leaves] : leaves;
+  const activeView =
+    typeof app.workspace.getActiveViewOfType === "function"
+      ? app.workspace.getActiveViewOfType(app.workspace.MarkdownView || Object)
+      : null;
+  const leaves =
+    typeof app.workspace.getLeavesOfType === "function"
+      ? app.workspace.getLeavesOfType("markdown")
+      : [];
+  const candidates = activeView ? [activeView, ...leaves] : leaves;
 
-    for (const leaf of candidates) {
-      const editor = leaf.editor || (leaf.view && leaf.view.editor);
-      if (!editor) continue;
-      const cm = editor.cm;
-      if (cm && typeof cm.posAtDOM === "function" && cm.state && cm.state.doc) {
+  for (const leaf of candidates) {
+    if (!leaf) continue;
+    const editor = leaf.editor || (leaf.view && leaf.view.editor);
+    if (!editor) continue;
+    const cm = editor.cm;
+    if (cm && typeof cm.posAtDOM === "function" && cm.state && cm.state.doc) {
+      if (cm.dom && typeof cm.dom.contains === "function" && !cm.dom.contains(block)) {
+        continue;
+      }
+      try {
         const pos = cm.posAtDOM(block);
         if (Number.isFinite(pos) && pos >= 0) {
           const doc = cm.state.doc;
@@ -261,10 +265,11 @@ function findDiagramTextFromEditor(block, app) {
             return doc.sliceString(doc.line(startLine).from, doc.line(Math.min(doc.lines, endLine)).to);
           }
         }
+      } catch (_err) {
+        // Continue checking other candidate leaves if posAtDOM fails for this editor
+        continue;
       }
     }
-  } catch (_err) {
-    // Fail safely if CM6 internal access is unavailable
   }
   return null;
 }
@@ -284,6 +289,20 @@ function extractDirectiveFromElement(block, app = null) {
   }
 
   const overrides = {};
+
+  // 1.5. Inherit directives from ancestor container if present (e.g. section el or .block-language-mermaid)
+  if (typeof block.closest === "function") {
+    const ancestor = block.closest("[data-mb-directives], [data-mermaid-boost], .block-language-mermaid");
+    if (ancestor && ancestor !== block) {
+      if (ancestor._mbDirectives && typeof ancestor._mbDirectives === "object") {
+        Object.assign(overrides, ancestor._mbDirectives);
+      } else if (ancestor.dataset && ancestor.dataset.mbDirectives) {
+        try {
+          Object.assign(overrides, JSON.parse(ancestor.dataset.mbDirectives));
+        } catch (_e) {}
+      }
+    }
+  }
 
   // 2. Direct dataset or attribute directives
   const rawDirective =

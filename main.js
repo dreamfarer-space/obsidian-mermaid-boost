@@ -1792,6 +1792,7 @@ var require_lightbox = __commonJS({
         b.type = "button";
         b.className = `mb-icon-btn ${extraCls}`;
         b.title = label;
+        b.setAttribute("aria-label", label);
         setIcon2(b, icon);
         b.addEventListener("click", (e) => {
           e.stopPropagation();
@@ -2064,15 +2065,19 @@ var require_directive = __commonJS({
     }
     function findDiagramTextFromEditor(block, app) {
       if (!block || !app || !app.workspace) return null;
-      try {
-        const activeView = typeof app.workspace.getActiveViewOfType === "function" ? app.workspace.getActiveViewOfType(app.workspace.MarkdownView || Object) : null;
-        const leaves = typeof app.workspace.getLeavesOfType === "function" ? app.workspace.getLeavesOfType("markdown") : [];
-        const candidates = activeView ? [activeView, ...leaves] : leaves;
-        for (const leaf of candidates) {
-          const editor = leaf.editor || leaf.view && leaf.view.editor;
-          if (!editor) continue;
-          const cm = editor.cm;
-          if (cm && typeof cm.posAtDOM === "function" && cm.state && cm.state.doc) {
+      const activeView = typeof app.workspace.getActiveViewOfType === "function" ? app.workspace.getActiveViewOfType(app.workspace.MarkdownView || Object) : null;
+      const leaves = typeof app.workspace.getLeavesOfType === "function" ? app.workspace.getLeavesOfType("markdown") : [];
+      const candidates = activeView ? [activeView, ...leaves] : leaves;
+      for (const leaf of candidates) {
+        if (!leaf) continue;
+        const editor = leaf.editor || leaf.view && leaf.view.editor;
+        if (!editor) continue;
+        const cm = editor.cm;
+        if (cm && typeof cm.posAtDOM === "function" && cm.state && cm.state.doc) {
+          if (cm.dom && typeof cm.dom.contains === "function" && !cm.dom.contains(block)) {
+            continue;
+          }
+          try {
             const pos = cm.posAtDOM(block);
             if (Number.isFinite(pos) && pos >= 0) {
               const doc = cm.state.doc;
@@ -2094,9 +2099,10 @@ var require_directive = __commonJS({
                 return doc.sliceString(doc.line(startLine).from, doc.line(Math.min(doc.lines, endLine)).to);
               }
             }
+          } catch (_err) {
+            continue;
           }
         }
-      } catch (_err) {
       }
       return null;
     }
@@ -2106,6 +2112,19 @@ var require_directive = __commonJS({
         return block._mbDirectives;
       }
       const overrides = {};
+      if (typeof block.closest === "function") {
+        const ancestor = block.closest("[data-mb-directives], [data-mermaid-boost], .block-language-mermaid");
+        if (ancestor && ancestor !== block) {
+          if (ancestor._mbDirectives && typeof ancestor._mbDirectives === "object") {
+            Object.assign(overrides, ancestor._mbDirectives);
+          } else if (ancestor.dataset && ancestor.dataset.mbDirectives) {
+            try {
+              Object.assign(overrides, JSON.parse(ancestor.dataset.mbDirectives));
+            } catch (_e) {
+            }
+          }
+        }
+      }
       const rawDirective = block.dataset && (block.dataset.mbDirective || block.dataset.mbDirectives) || typeof block.getAttribute === "function" && (block.getAttribute("data-mermaid-boost") || block.getAttribute("data-mb-directive") || block.getAttribute("data-mb-directives"));
       if (rawDirective) {
         try {
@@ -2237,6 +2256,9 @@ var {
   resolveEffectiveSettings
 } = require_directive();
 var MermaidBoostPlugin = class extends Plugin {
+  /**
+   * Initializes the Mermaid Boost plugin, registers commands, event handlers, settings, and observers.
+   */
   async onload() {
     await this.loadSettings();
     this.addSettingTab(new MermaidBoostSettingTab(this.app, this));
@@ -2293,6 +2315,9 @@ var MermaidBoostPlugin = class extends Plugin {
       }
     });
   }
+  /**
+   * Cleans up plugin resources, observers, DOM modifications, styles, and event listeners on unload.
+   */
   onunload() {
     if (this.mutationObserver) {
       this.mutationObserver.disconnect();
@@ -2461,6 +2486,10 @@ var MermaidBoostPlugin = class extends Plugin {
       delete document.body.dataset.mbHasPattern;
     }
   }
+  /**
+   * Cycles to the next visual theme and saves settings.
+   * @returns {Promise<string>} The new theme key.
+   */
   async cycleTheme() {
     const nextKey = nextThemeKey(this.settings.theme);
     this.settings.theme = nextKey;
@@ -2472,6 +2501,9 @@ var MermaidBoostPlugin = class extends Plugin {
     new Notice(`Mermaid Boost theme: ${themeDef ? themeDef.name : nextKey}`);
     return nextKey;
   }
+  /**
+   * Loads plugin settings from disk and applies fallbacks if necessary.
+   */
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
     if (LEGACY_THEME_MAP[this.settings.theme]) {
@@ -2482,14 +2514,24 @@ var MermaidBoostPlugin = class extends Plugin {
       this.settings.nodeRadius = THEMES.claude.defaultRadius;
     }
   }
+  /**
+   * Persists plugin settings to disk, updates CSS variables, and refreshes rendered diagrams.
+   */
   async saveSettings() {
     await this.saveData(this.settings);
     this.applyGlobalThemeVariables();
     this.refreshAllMermaidBlocks(true);
   }
+  /**
+   * Detects whether Obsidian is currently using a dark theme.
+   * @returns {boolean} True if dark mode is active.
+   */
   isDarkMode() {
     return document.body.classList.contains("theme-dark");
   }
+  /**
+   * Updates global CSS variables on document.body corresponding to current theme and appearance settings.
+   */
   applyGlobalThemeVariables() {
     const isDark = this.isDarkMode();
     const { themeKey, themeObj, palette } = resolveThemeSpec(this.settings, isDark);
@@ -2515,6 +2557,9 @@ var MermaidBoostPlugin = class extends Plugin {
       themeObj.fontFamily || '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif'
     );
   }
+  /**
+   * Sets up a MutationObserver to watch for dynamically added or removed Mermaid diagrams.
+   */
   setupMutationObserver() {
     this._pendingBlocks = /* @__PURE__ */ new Set();
     this._flushTimer = null;
@@ -2607,8 +2652,46 @@ var MermaidBoostPlugin = class extends Plugin {
     };
     document.addEventListener("click", this._onCalloutClick, true);
   }
+  /**
+   * Markdown post-processor that intercepts rendered markdown elements, extracts directives,
+   * and decorates any rendered Mermaid diagrams.
+   * @param {HTMLElement} el - The markdown rendered element or block container.
+   * @param {Object} ctx - Obsidian MarkdownPostProcessorContext with getSectionInfo.
+   */
   handleMarkdownPostProcessor(el, ctx) {
     if (!el) return;
+    let sectionText = "";
+    if (ctx && typeof ctx.getSectionInfo === "function") {
+      try {
+        const info = ctx.getSectionInfo(el);
+        if (info && typeof info.text === "string" && Number.isFinite(info.lineStart) && Number.isFinite(info.lineEnd)) {
+          const lines = info.text.split("\n").slice(info.lineStart, info.lineEnd + 1);
+          sectionText = lines.join("\n");
+        }
+      } catch (_e) {
+      }
+    }
+    let sectionOverrides = null;
+    if (sectionText) {
+      sectionOverrides = extractDirectivesFromText(sectionText);
+      if (Object.keys(sectionOverrides).length > 0) {
+        el._mbDirectives = sectionOverrides;
+        if (el.dataset) {
+          el.dataset.mbDirectives = JSON.stringify(sectionOverrides);
+        }
+        if (typeof el.querySelectorAll === "function") {
+          const codeBlocks = el.querySelectorAll(
+            "code.language-mermaid, pre.language-mermaid, .block-language-mermaid"
+          );
+          for (let i = 0; i < codeBlocks.length; i++) {
+            codeBlocks[i]._mbDirectives = sectionOverrides;
+            if (codeBlocks[i].dataset) {
+              codeBlocks[i].dataset.mbDirectives = JSON.stringify(sectionOverrides);
+            }
+          }
+        }
+      }
+    }
     const mermaidBlocks = [];
     if (el.classList && el.classList.contains("mermaid")) {
       mermaidBlocks.push(el);
@@ -2622,17 +2705,6 @@ var MermaidBoostPlugin = class extends Plugin {
       }
     }
     if (mermaidBlocks.length === 0) return;
-    let sectionText = "";
-    if (ctx && typeof ctx.getSectionInfo === "function") {
-      try {
-        const info = ctx.getSectionInfo(el);
-        if (info && typeof info.text === "string" && Number.isFinite(info.lineStart) && Number.isFinite(info.lineEnd)) {
-          const lines = info.text.split("\n").slice(info.lineStart, info.lineEnd + 1);
-          sectionText = lines.join("\n");
-        }
-      } catch (_e) {
-      }
-    }
     if (sectionText) {
       const blockRegex = /```(?:mermaid)\s*\n([\s\S]*?)```/gi;
       const blockMatches = Array.from(sectionText.matchAll(blockRegex));
@@ -2647,15 +2719,19 @@ var MermaidBoostPlugin = class extends Plugin {
             }
           }
         }
-      } else {
-        const overrides = extractDirectivesFromText(sectionText);
-        if (Object.keys(overrides).length > 0) {
-          for (const b of mermaidBlocks) {
-            b._mbDirectives = overrides;
-            if (b.dataset) {
-              b.dataset.mbDirectives = JSON.stringify(overrides);
-            }
+      } else if (sectionOverrides && Object.keys(sectionOverrides).length > 0) {
+        for (const b of mermaidBlocks) {
+          b._mbDirectives = sectionOverrides;
+          if (b.dataset) {
+            b.dataset.mbDirectives = JSON.stringify(sectionOverrides);
           }
+        }
+      }
+    } else if (sectionOverrides && Object.keys(sectionOverrides).length > 0) {
+      for (const b of mermaidBlocks) {
+        b._mbDirectives = sectionOverrides;
+        if (b.dataset) {
+          b.dataset.mbDirectives = JSON.stringify(sectionOverrides);
         }
       }
     }
@@ -2665,6 +2741,10 @@ var MermaidBoostPlugin = class extends Plugin {
       }
     }
   }
+  /**
+   * Refreshes and decorates all Mermaid diagram blocks currently in the document.
+   * @param {boolean} [forceRestyle=false] - Whether to force a full SVG DOM beautification pass.
+   */
   refreshAllMermaidBlocks(forceRestyle = false) {
     if (this._isDecorating) return;
     this._isDecorating = true;
@@ -2677,6 +2757,11 @@ var MermaidBoostPlugin = class extends Plugin {
       this._isDecorating = false;
     }
   }
+  /**
+   * Decorates a single Mermaid diagram element with themes, sizing, toolbar, and zoom controls.
+   * @param {HTMLElement} block - The container element holding the Mermaid SVG.
+   * @param {boolean} [forceRestyle=false] - Whether to re-apply SVG styles unconditionally.
+   */
   decorateMermaidBlock(block, forceRestyle = false) {
     const svg = block.querySelector("svg");
     if (!svg) return;
@@ -2858,7 +2943,7 @@ var MermaidBoostPlugin = class extends Plugin {
     const sizing = computeSmartDiagramSize(
       effectiveNat,
       diagramMeta,
-      effectiveSettings,
+      sizingSettings,
       containerWidth
     );
     const userZoomFactor = parseFloat(block.dataset && block.dataset.mbZoomFactor || "1") || 1;
@@ -3028,6 +3113,12 @@ var MermaidBoostPlugin = class extends Plugin {
     });
     this.scheduleResizeBatch();
   }
+  /**
+   * Ensures the expand/collapse bar is created and properly configured for tall diagrams.
+   * @param {HTMLElement} block - The Mermaid card element.
+   * @param {number} fullHeight - Unconstrained diagram height in pixels.
+   * @param {number} collapsedHeight - Collapsed maximum height in pixels.
+   */
   ensureExpandBar(block, fullHeight, collapsedHeight) {
     let existingBars = [];
     if (typeof block.querySelectorAll === "function") {
@@ -3061,6 +3152,15 @@ var MermaidBoostPlugin = class extends Plugin {
     });
     bar.appendChild(btn);
   }
+  /**
+   * Ensures the floating action toolbar is created or updated above the diagram.
+   * @param {HTMLElement} block - The Mermaid card element.
+   * @param {SVGElement} svg - The diagram SVG element.
+   * @param {Object} diagramMeta - Diagram classification metadata.
+   * @param {number} displayPercent - Current scale percentage.
+   * @param {string} cardPresetKey - Active size preset name.
+   * @param {Object|null} [sizingSettings=null] - Card sizing and header display settings.
+   */
   ensureToolbar(block, svg, diagramMeta, displayPercent, cardPresetKey, sizingSettings = null) {
     const shouldShowHeader = sizingSettings && typeof sizingSettings.showHeaderBar === "boolean" ? sizingSettings.showHeaderBar : this.settings.showHeaderBar !== false;
     if (!shouldShowHeader) {
@@ -3146,23 +3246,41 @@ var MermaidBoostPlugin = class extends Plugin {
       this.openFullscreenLightbox(svg, diagramMeta);
     });
   }
+  /**
+   * Resolves a CSS color string, converting CSS variable references into computed hex/rgb values.
+   * @param {string} val - CSS color or var(--...) expression.
+   * @param {string} [fallback="#ffffff"] - Fallback color if resolution fails.
+   * @returns {string} Computed CSS color string.
+   */
   resolveLiveCssColor(val, fallback = "#ffffff") {
     return resolveLiveCssColor(val, fallback);
   }
-  async exportSvgAsPng(svg) {
-    const block = svg && svg.closest && svg.closest(".mermaid-boost-card") || svg && svg.parentElement;
-    const effectiveSettings = block && block._mbEffectiveSettings || this.settings;
+  /**
+   * Exports an SVG diagram element as a high-resolution PNG image with transparent or styled background.
+   * @param {SVGElement} svg - The SVG element to export.
+   * @param {Object|null} [explicitSettings=null] - Optional explicit settings/overrides.
+   * @returns {Promise<Blob|null>} The generated PNG blob or null if export failed.
+   */
+  async exportSvgAsPng(svg, explicitSettings = null) {
+    const block = svg && svg.closest && svg.closest(".mermaid-boost-card");
+    const effectiveSettings = explicitSettings || block && block._mbEffectiveSettings || svg && svg._mbEffectiveSettings || this.settings;
     return exportSvgAsPng(svg, effectiveSettings, this.isDarkMode());
   }
+  /**
+   * Opens the diagram in the immersive fullscreen lightbox viewer with pan/zoom and actions.
+   * @param {SVGElement} sourceSvg - The source SVG diagram element to display.
+   * @param {Object} diagramMeta - Diagram classification metadata.
+   * @returns {Function|null} Close function to dismiss the lightbox.
+   */
   openFullscreenLightbox(sourceSvg, diagramMeta) {
-    const block = sourceSvg && sourceSvg.closest && sourceSvg.closest(".mermaid-boost-card") || sourceSvg && sourceSvg.parentElement;
+    const block = sourceSvg && sourceSvg.closest && sourceSvg.closest(".mermaid-boost-card");
     const effectiveSettings = block && block._mbEffectiveSettings || this.settings;
     let closeFn = null;
     closeFn = openFullscreenLightbox(sourceSvg, diagramMeta, {
       settings: effectiveSettings,
       saveSettings: () => this.saveSettings(),
       cycleTheme: () => this.cycleTheme(),
-      exportSvgAsPng: (svg) => this.exportSvgAsPng(svg),
+      exportSvgAsPng: (svg) => this.exportSvgAsPng(svg, effectiveSettings),
       onClose: () => {
         if (closeFn && this._openLightboxes) {
           this._openLightboxes.delete(closeFn);
