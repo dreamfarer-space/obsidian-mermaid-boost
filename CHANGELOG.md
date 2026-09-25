@@ -2,15 +2,27 @@
 
 All notable changes to **Mermaid Boost** (`mermaid-boost`) are documented in this file.
 
-## [Unreleased]
+## [1.0.4] - 2026-09-26
 
 ### Added
+- **Per-Diagram Overrides (`%% mermaid-boost: ...`)**:
+  - Embedded local configuration comments directly inside Mermaid diagram source via `%% mermaid-boost: key=value` or short alias `%%mb: key=value` comments (also supports HTML comments `<!-- mermaid-boost: ... -->`).
+  - Supported fine-grained diagram-level control over `theme`, `preset` (`compact`/`balanced`/`relaxed`/`original`), `frame` (`true`/`false`), `grid` (`true`/`false`), `header` (`true`/`false`), `radius` (number), and `collapse` (`true`/`false`).
+  - Preserved global settings when cycling themes in fullscreen lightbox for diagrams with local overrides.
+  - Implemented CommonMark-compliant fence matching to handle any fence length without premature termination.
 - **Dynamic ResizeObserver Diagram Resizing**:
   - Attached non-duplicate `ResizeObserver` instances to each enhanced Mermaid diagram container to respond dynamically to split pane dragging, sidebar open/close, mobile orientation changes, and workspace resize events.
   - Implemented debounced event batching to eliminate layout thrashing.
   - Re-run only sizing-related logic on resize instead of triggering full diagram card rebuilds or SVG restyling.
   - Guaranteed clean observer teardown upon diagram disappearance and plugin unload.
   - Reinforced narrow-container constraints and responsive min-width (`min(240px, 100%)`) to prevent mobile and narrow-pane overflow.
+- **Comprehensive DOM & Obsidian Lifecycle Integration Test Suite**:
+  - Added 51 automated unit and integration tests covering idempotency, MutationObserver debouncing, view switching between Reading View and Live Preview, note close teardown, toolbar zoom/reset/expand interactions, fullscreen lightbox interactions, and theme switching.
+
+### Changed
+- **CSS Strict Specificity Architecture**:
+  - Completely eliminated all `!important` occurrences in `styles.css` using structured selector specificity (`.markdown-rendered .mermaid.mermaid-boost-card` and `.mermaid-boost-card.mb-has-frame`).
+  - Ensured 100% compliance with Obsidian Community Plugin CSS guidelines and automated lint checks.
 
 ## [1.0.3] - 2026-09-25
 

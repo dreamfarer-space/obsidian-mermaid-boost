@@ -6,7 +6,7 @@
 
 <br />
 
-[![Version](https://img.shields.io/badge/release-v1.0.3-7c3aed?style=flat-square)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/releases/tag/1.0.3)
+[![Version](https://img.shields.io/badge/release-v1.0.4-7c3aed?style=flat-square)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/releases/tag/1.0.4)
 [![Obsidian](https://img.shields.io/badge/Obsidian-%3E%3D1.5.0-483699?style=flat-square&logo=obsidian&logoColor=white)](https://obsidian.md)
 [![Themes](https://img.shields.io/badge/%E4%B8%BB%E9%A2%98-7%20%E7%BB%84%2029%20%E6%AC%BE-c6613f?style=flat-square)](#7-%E5%A4%A7%E5%88%86%E7%BB%84-29-%E6%AC%BE%E4%B8%BB%E9%A2%98%E4%B8%80%E8%A7%88)
 [![CI](https://github.com/dreamfarer-space/obsidian-mermaid-boost/actions/workflows/ci.yml/badge.svg)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/actions/workflows/ci.yml)
@@ -141,7 +141,7 @@ flowchart TD
 
 ### 方式一：通过 GitHub Release 或 BRAT 安装
 
-- **从 [GitHub Releases (`v1.0.3`)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/releases/tag/1.0.3) 下载**：下载 `mermaid-boost-1.0.3.zip` 并将其中的文件解压到 `<Vault>/.obsidian/plugins/mermaid-boost/`，或单独下载 `manifest.json`、`main.js`、`styles.css` 并复制到该目录。
+- **从 [GitHub Releases (`v1.0.4`)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/releases/tag/1.0.4) 下载**：下载 `mermaid-boost-1.0.4.zip` 并将其中的文件解压到 `<Vault>/.obsidian/plugins/mermaid-boost/`，或单独下载 `manifest.json`、`main.js`、`styles.css` 并复制到该目录。
 - **通过 [Obsidian BRAT](https://github.com/TfTHacker/obsidian42-brat) 安装**：在 BRAT 中添加测试插件仓库 `dreamfarer-space/obsidian-mermaid-boost` 并启用 **Mermaid Boost**。
 
 ### 方式二：手动安装
@@ -257,7 +257,7 @@ node --check tests/validation.test.js
 | `scripts/build.js` | 基于 `esbuild` 的构建脚本，支持 `--check` 与 `--watch` 模式 |
 | `scripts/validate-plugin.js` | 插件元数据 Schema、发布标签与文档版本号一致性校验脚本 |
 | `styles.css` | 图表卡片、工具栏按钮、全屏 Lightbox 弹窗与主题相关样式 |
-| `manifest.json` | Obsidian 插件清单元数据（`1.0.3`，`minAppVersion: 1.5.0`） |
+| `manifest.json` | Obsidian 插件清单元数据（`1.0.4`，`minAppVersion: 1.5.0`） |
 | `assets/` | 文档顶部 Hero 横幅与 29 款主题全景预览 SVG 资源 |
 
 ### 发布流程
