@@ -120,6 +120,12 @@ function openFullscreenLightbox(sourceSvg, diagramMeta, options = {}) {
     let nextKey;
     if (typeof cycleTheme === "function") {
       nextKey = await cycleTheme();
+      if (nextKey) {
+        settings.theme = nextKey;
+        if (THEMES[nextKey] && Number.isFinite(THEMES[nextKey].defaultRadius)) {
+          settings.nodeRadius = THEMES[nextKey].defaultRadius;
+        }
+      }
     } else {
       nextKey = nextThemeKey(settings.theme);
       settings.theme = nextKey;

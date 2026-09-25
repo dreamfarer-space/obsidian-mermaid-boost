@@ -57,7 +57,39 @@ Every enhanced diagram card exposes quick controls in its header toolbar:
 - **Inline Zoom (`−` / `72%` / `+`)** — Adjust diagram scale on the spot or click the percentage badge to reset.
 - **Double-Click Fullscreen Lightbox** — Open any diagram in an interactive overlay with mouse-wheel zoom and click-drag panning.
 - **One-Click HD PNG Export** — Copy or export crisp, high-resolution raster images ready for slides, papers, or chat.
-- **Customizable Frame & Grid** — Toggle the card frame, subtle dot-grid background, header bar, node corner radius, and pie-chart padding trim.
+### 3. Per-Diagram Overrides (`%% mermaid-boost: ...`)
+
+Need a different theme, size preset, or collapse behavior for a specific diagram? You can override global settings directly inside standard Mermaid comments:
+
+````markdown
+```mermaid
+%% mermaid-boost: theme=blueprint size=relaxed collapse=false
+flowchart TD
+    A[Global Settings Fallback] --> B[Diagram-Specific Override]
+```
+````
+
+> [!TIP]
+> Standard Mermaid comments (`%% ...`) are completely ignored outside Obsidian, keeping your Markdown 100% portable on GitHub, GitLab, and documentation sites. Adjacent Markdown comments (`<!-- mermaid-boost: ... -->`) and the short prefix `%%mb: ...` are also supported.
+
+#### Supported Override Keys
+
+| Key | Description | Valid Values | Example |
+| :--- | :--- | :--- | :--- |
+| **`theme`** | Override color palette & typography | Any of the 29 theme IDs (`blueprint`, `nord`, `claude`, etc.) | `theme=blueprint` |
+| **`size`** | Override sizing preset & readable floor | `compact` (`s`), `balanced` (`m`), `relaxed` (`l`), `original` (`1:1`) | `size=relaxed` |
+| **`collapse`** | Override auto-collapse on tall flowcharts | `true` / `false` (`yes` / `no`, `1` / `0`) | `collapse=false` |
+| **`frame`** | Toggle card container border & background | `true` / `false` (`none`) | `frame=false` |
+| **`grid`** | Toggle dot-grid canvas background | `true` / `false` (`dot` / `none`) | `grid=true` |
+| **`header`** | Toggle top micro-toolbar | `true` / `false` | `header=false` |
+| **`radius`** | Override node & card corner radius | Number in pixels (`0` to `64`, e.g. `8`, `12px`) | `radius=8` |
+
+#### Precedence & Fallback Rules
+
+1. **Per-diagram directive** — Explicit keys in `%% mermaid-boost: ...` take highest precedence.
+2. **Interactive session zoom** — Temporary toolbar zoom adjustments scale on top of the diagram's base size.
+3. **Global plugin settings** — Vault-wide settings in Obsidian Settings act as the fallback for any unmentioned keys.
+4. **Safe degradation** — Unknown keys or malformed values fail safely and fall back to global settings without mutating global configuration.
 
 ---
 

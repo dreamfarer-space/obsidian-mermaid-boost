@@ -12,6 +12,11 @@ const { THEMES, resolveThemeSpec, LEGACY_THEME_MAP, nextThemeKey } = require("./
 const { beautifySvgDom } = require("./beautify.js");
 const { resolveLiveCssColor, exportSvgAsPng } = require("./export.js");
 const { openFullscreenLightbox } = require("./lightbox.js");
+const {
+  extractDirectivesFromText,
+  extractDirectiveFromElement,
+  resolveEffectiveSettings,
+} = require("./directive.js");
 
 class MermaidBoostPlugin extends Plugin {
   async onload() {
@@ -20,6 +25,12 @@ class MermaidBoostPlugin extends Plugin {
     this.applyGlobalThemeVariables();
 
     this.setupMutationObserver();
+
+    if (typeof this.registerMarkdownPostProcessor === "function") {
+      this.registerMarkdownPostProcessor((el, ctx) => {
+        this.handleMarkdownPostProcessor(el, ctx);
+      });
+    }
 
     this.app.workspace.onLayoutReady(() => {
       this.refreshAllMermaidBlocks();
@@ -203,7 +214,37 @@ class MermaidBoostPlugin extends Plugin {
         delete block.dataset.mbZoomFactor;
         delete block.dataset.mbPresetOverride;
         delete block.dataset.mbObserved;
+        delete block.dataset.mbTheme;
+        delete block.dataset.mbHasPattern;
+        delete block.dataset.mbDirectives;
       }
+      delete block._mbDirectives;
+      delete block._mbEffectiveSettings;
+      if (block.classList) {
+        block.classList.remove(
+          "mb-no-frame",
+          "mb-has-frame",
+          "mb-has-grid",
+          "mb-no-grid"
+        );
+      }
+      [
+        "--mb-card-bg",
+        "--mb-card-fg",
+        "--mb-card-bg-image",
+        "--mb-card-bg-size",
+        "--mb-svg-filter",
+        "--mb-card-border",
+        "--mb-grid-dot",
+        "--mb-edge-stroke",
+        "--mb-node-radius",
+        "--mb-font-family",
+        "--mb-collapsed-height",
+      ].forEach((prop) => {
+        if (block.style && typeof block.style.removeProperty === "function") {
+          block.style.removeProperty(prop);
+        }
+      });
       this.unobserveDiagram(block);
     });
     if (typeof document !== "undefined" && document.body && document.body.dataset) {
@@ -391,6 +432,73 @@ class MermaidBoostPlugin extends Plugin {
     document.addEventListener("click", this._onCalloutClick, true);
   }
 
+  handleMarkdownPostProcessor(el, ctx) {
+    if (!el) return;
+    const mermaidBlocks = [];
+    if (el.classList && el.classList.contains("mermaid")) {
+      mermaidBlocks.push(el);
+    }
+    if (typeof el.querySelectorAll === "function") {
+      const nested = el.querySelectorAll(".mermaid");
+      for (let i = 0; i < nested.length; i++) {
+        if (!mermaidBlocks.includes(nested[i])) {
+          mermaidBlocks.push(nested[i]);
+        }
+      }
+    }
+    if (mermaidBlocks.length === 0) return;
+
+    let sectionText = "";
+    if (ctx && typeof ctx.getSectionInfo === "function") {
+      try {
+        const info = ctx.getSectionInfo(el);
+        if (
+          info &&
+          typeof info.text === "string" &&
+          Number.isFinite(info.lineStart) &&
+          Number.isFinite(info.lineEnd)
+        ) {
+          const lines = info.text.split("\n").slice(info.lineStart, info.lineEnd + 1);
+          sectionText = lines.join("\n");
+        }
+      } catch (_e) {}
+    }
+
+    if (sectionText) {
+      const blockRegex = /```(?:mermaid)\s*\n([\s\S]*?)```/gi;
+      const blockMatches = Array.from(sectionText.matchAll(blockRegex));
+
+      if (blockMatches.length > 0 && blockMatches.length === mermaidBlocks.length) {
+        for (let i = 0; i < mermaidBlocks.length; i++) {
+          const rawCode = blockMatches[i][1];
+          const overrides = extractDirectivesFromText(rawCode);
+          if (Object.keys(overrides).length > 0) {
+            mermaidBlocks[i]._mbDirectives = overrides;
+            if (mermaidBlocks[i].dataset) {
+              mermaidBlocks[i].dataset.mbDirectives = JSON.stringify(overrides);
+            }
+          }
+        }
+      } else {
+        const overrides = extractDirectivesFromText(sectionText);
+        if (Object.keys(overrides).length > 0) {
+          for (const b of mermaidBlocks) {
+            b._mbDirectives = overrides;
+            if (b.dataset) {
+              b.dataset.mbDirectives = JSON.stringify(overrides);
+            }
+          }
+        }
+      }
+    }
+
+    for (const b of mermaidBlocks) {
+      if (b.querySelector && b.querySelector("svg")) {
+        this.decorateMermaidBlock(b, true);
+      }
+    }
+  }
+
   refreshAllMermaidBlocks(forceRestyle = false) {
     if (this._isDecorating) return;
     this._isDecorating = true;
@@ -485,14 +593,88 @@ class MermaidBoostPlugin extends Plugin {
       }
     }
 
+    // Extract per-diagram directives and compute diagram-specific effective settings
+    const overrides = extractDirectiveFromElement(block, this.app);
+    const effectiveSettings = resolveEffectiveSettings(this.settings, overrides);
+    block._mbEffectiveSettings = effectiveSettings;
+
+    // Apply per-diagram frame override (mb-no-frame / mb-has-frame)
+    if (typeof overrides.frame === "boolean") {
+      block.classList.toggle("mb-no-frame", !effectiveSettings.showCardFrame);
+      block.classList.toggle("mb-has-frame", effectiveSettings.showCardFrame);
+    } else {
+      block.classList.remove("mb-no-frame", "mb-has-frame");
+    }
+
+    // Apply per-diagram grid override (mb-has-grid / mb-no-grid)
+    if (typeof overrides.grid === "boolean") {
+      block.classList.toggle("mb-has-grid", effectiveSettings.showDotGrid);
+      block.classList.toggle("mb-no-grid", !effectiveSettings.showDotGrid);
+    } else {
+      block.classList.remove("mb-has-grid", "mb-no-grid");
+    }
+
+    // Apply per-diagram theme palette CSS custom properties to card container
+    const hasThemeOverride = Boolean(overrides.theme);
+    const hasRadiusOverride = Number.isFinite(overrides.radius);
+    if (hasThemeOverride || hasRadiusOverride) {
+      const isDark = this.isDarkMode();
+      const { themeKey, themeObj, palette } = resolveThemeSpec(effectiveSettings, isDark);
+      if (block.style && typeof block.style.setProperty === "function") {
+        block.style.setProperty("--mb-card-bg", palette.cardBg);
+        block.style.setProperty("--mb-card-fg", palette.cardFg || palette.rootNode.text);
+        block.style.setProperty("--mb-card-bg-image", themeObj.cardBgImage || "none");
+        block.style.setProperty("--mb-card-bg-size", themeObj.cardBgSize || "auto");
+        block.style.setProperty("--mb-svg-filter", themeObj.svgFilter || "none");
+        block.style.setProperty("--mb-card-border", palette.cardBorder);
+        block.style.setProperty("--mb-grid-dot", palette.gridDot);
+        block.style.setProperty("--mb-edge-stroke", palette.edge.stroke);
+        block.style.setProperty(
+          "--mb-node-radius",
+          `${effectiveSettings.nodeRadius ?? themeObj.defaultRadius ?? 6}px`
+        );
+        block.style.setProperty(
+          "--mb-font-family",
+          themeObj.fontFamily || '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif'
+        );
+      }
+      if (block.dataset) {
+        block.dataset.mbTheme = themeKey;
+        block.dataset.mbHasPattern =
+          themeObj.cardBgImage && themeObj.cardBgImage !== "none" ? "true" : "false";
+      }
+    } else {
+      [
+        "--mb-card-bg",
+        "--mb-card-fg",
+        "--mb-card-bg-image",
+        "--mb-card-bg-size",
+        "--mb-svg-filter",
+        "--mb-card-border",
+        "--mb-grid-dot",
+        "--mb-edge-stroke",
+        "--mb-node-radius",
+        "--mb-font-family",
+      ].forEach((prop) => {
+        if (block.style && typeof block.style.removeProperty === "function") {
+          block.style.removeProperty(prop);
+        }
+      });
+      if (block.dataset) {
+        delete block.dataset.mbTheme;
+        delete block.dataset.mbHasPattern;
+      }
+    }
+
     // Apply SVG DOM Beautification (colors, rounded corners, arrowheads, shadows)
-    if (forceRestyle || svg.dataset.mbStyledTheme !== `${this.settings.theme}-${this.isDarkMode()}-${this.settings.multiToneNodes}-${this.settings.nodeRadius}`) {
-      beautifySvgDom(svg, this.settings, this.isDarkMode());
-      svg.dataset.mbStyledTheme = `${this.settings.theme}-${this.isDarkMode()}-${this.settings.multiToneNodes}-${this.settings.nodeRadius}`;
+    const beautifyKey = `${effectiveSettings.theme}-${this.isDarkMode()}-${effectiveSettings.multiToneNodes}-${effectiveSettings.nodeRadius}`;
+    if (forceRestyle || svg.dataset.mbStyledTheme !== beautifyKey) {
+      beautifySvgDom(svg, effectiveSettings, this.isDarkMode());
+      svg.dataset.mbStyledTheme = beautifyKey;
     }
 
     // Apply responsive sizing
-    this.updateDiagramSizing(block);
+    this.updateDiagramSizing(block, null, effectiveSettings);
 
     // Attach ResizeObserver to observe diagram container
     this.observeDiagram(block);
@@ -519,8 +701,9 @@ class MermaidBoostPlugin extends Plugin {
    * Recomputes and applies responsive diagram sizing without full DOM or theme rebuilds.
    * @param {HTMLElement} block - The Mermaid diagram card element.
    * @param {number|null} [explicitContainerWidth=null] - Optional explicitly measured container width.
+   * @param {Object|null} [passedEffectiveSettings=null] - Optional precomputed effective settings.
    */
-  updateDiagramSizing(block, explicitContainerWidth = null) {
+  updateDiagramSizing(block, explicitContainerWidth = null, passedEffectiveSettings = null) {
     if (!block) return;
     const svg = block.querySelector("svg");
     if (!svg) return;
@@ -535,9 +718,15 @@ class MermaidBoostPlugin extends Plugin {
 
     const diagramMeta = detectDiagramType(svg, origNat);
 
+    const effectiveSettings =
+      passedEffectiveSettings ||
+      block._mbEffectiveSettings ||
+      resolveEffectiveSettings(this.settings, extractDirectiveFromElement(block, this.app));
+    block._mbEffectiveSettings = effectiveSettings;
+
     let effectiveNat = origNat;
     if (diagramMeta.type === "pie") {
-      if (this.settings.trimPiePadding) {
+      if (effectiveSettings.trimPiePadding) {
         effectiveNat = tightenPieViewBox(svg, origNat);
       } else if (svg.dataset.mbOrigViewBox) {
         svg.setAttribute("viewBox", svg.dataset.mbOrigViewBox);
@@ -545,26 +734,26 @@ class MermaidBoostPlugin extends Plugin {
     }
 
     const cardPresetKey =
-      (block.dataset && block.dataset.mbPresetOverride) || this.settings.sizePreset;
+      (block.dataset && block.dataset.mbPresetOverride) || effectiveSettings.sizePreset;
     const cardPreset = SIZE_PRESETS[cardPresetKey] || SIZE_PRESETS.compact;
-    const effectiveSettings = Object.assign({}, this.settings, {
+    const sizingSettings = Object.assign({}, effectiveSettings, {
       sizePreset: cardPresetKey,
       baseScale:
         block.dataset && block.dataset.mbPresetOverride
           ? cardPreset.baseScale
-          : this.settings.baseScale,
+          : effectiveSettings.baseScale,
       maxHeight:
         block.dataset && block.dataset.mbPresetOverride
           ? cardPreset.maxHeight
-          : this.settings.maxHeight,
+          : effectiveSettings.maxHeight,
       maxWidth:
         block.dataset && block.dataset.mbPresetOverride
           ? cardPreset.maxWidth
-          : this.settings.maxWidth,
+          : effectiveSettings.maxWidth,
       minReadableScale:
         block.dataset && block.dataset.mbPresetOverride
           ? cardPreset.minReadableScale
-          : this.settings.minReadableScale,
+          : effectiveSettings.minReadableScale,
     });
 
     const hostContainer =
@@ -648,7 +837,7 @@ class MermaidBoostPlugin extends Plugin {
       if (oldBar && typeof oldBar.remove === "function") oldBar.remove();
     }
 
-    this.ensureToolbar(block, svg, diagramMeta, displayPercent, cardPresetKey);
+    this.ensureToolbar(block, svg, diagramMeta, displayPercent, cardPresetKey, sizingSettings);
   }
 
   /**
@@ -830,7 +1019,27 @@ class MermaidBoostPlugin extends Plugin {
     bar.appendChild(btn);
   }
 
-  ensureToolbar(block, svg, diagramMeta, displayPercent) {
+  ensureToolbar(block, svg, diagramMeta, displayPercent, cardPresetKey, sizingSettings = null) {
+    const shouldShowHeader =
+      sizingSettings && typeof sizingSettings.showHeaderBar === "boolean"
+        ? sizingSettings.showHeaderBar
+        : this.settings.showHeaderBar !== false;
+
+    if (!shouldShowHeader) {
+      let existingToolbars = [];
+      if (typeof block.querySelectorAll === "function") {
+        try {
+          existingToolbars = Array.from(block.querySelectorAll(":scope > .mb-toolbar"));
+        } catch (_e) {
+          existingToolbars = Array.from(block.querySelectorAll(".mb-toolbar"));
+        }
+      }
+      for (const t of existingToolbars) {
+        if (typeof t.remove === "function") t.remove();
+      }
+      return;
+    }
+
     const renderKey = `${diagramMeta.type}-${displayPercent}`;
     let existingToolbars = [];
     if (typeof block.querySelectorAll === "function") {
@@ -924,13 +1133,19 @@ class MermaidBoostPlugin extends Plugin {
   }
 
   async exportSvgAsPng(svg) {
-    return exportSvgAsPng(svg, this.settings, this.isDarkMode());
+    const block = (svg && svg.closest && svg.closest(".mermaid-boost-card")) || (svg && svg.parentElement);
+    const effectiveSettings = (block && block._mbEffectiveSettings) || this.settings;
+    return exportSvgAsPng(svg, effectiveSettings, this.isDarkMode());
   }
 
   openFullscreenLightbox(sourceSvg, diagramMeta) {
+    const block =
+      (sourceSvg && sourceSvg.closest && sourceSvg.closest(".mermaid-boost-card")) ||
+      (sourceSvg && sourceSvg.parentElement);
+    const effectiveSettings = (block && block._mbEffectiveSettings) || this.settings;
     let closeFn = null;
     closeFn = openFullscreenLightbox(sourceSvg, diagramMeta, {
-      settings: this.settings,
+      settings: effectiveSettings,
       saveSettings: () => this.saveSettings(),
       cycleTheme: () => this.cycleTheme(),
       exportSvgAsPng: (svg) => this.exportSvgAsPng(svg),
