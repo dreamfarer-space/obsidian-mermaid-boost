@@ -722,3 +722,52 @@ test("Per-diagram override: fullscreen lightbox theme cycling does not mutate gl
     delete global.window;
   }
 });
+
+test("Per-diagram override: fullscreen lightbox theme cycling updates global settings when diagram has only non-theme directives", async () => {
+  const restoreObsidian = setupObsidianMock();
+  MockResizeObserver.instances = [];
+  global.ResizeObserver = MockResizeObserver;
+
+  try {
+    const { block, svg, host } = createDiagramBlock();
+    const { body } = setupGlobalEnvironment([block]);
+    body.appendChild(host);
+
+    const MermaidBoostPlugin = require("../src/main.js");
+    const plugin = new MermaidBoostPlugin({}, {});
+    await plugin.loadSettings();
+
+    // Global settings theme starts as 'claude'
+    assert.equal(plugin.settings.theme, "claude");
+
+    // Diagram has only non-theme directives
+    block.dataset.mbDirective = "radius=8 size=relaxed";
+    plugin.decorateMermaidBlock(block);
+
+    // Verify dataset.mbTheme is set by beautification styling, but _mbDirectives has no theme
+    assert.equal(Boolean(block.dataset.mbTheme), true);
+    assert.equal(Boolean(block._mbDirectives && block._mbDirectives.theme), false);
+
+    const closeLightbox = plugin.openFullscreenLightbox(svg, { type: "flowchart", label: "Flowchart" });
+
+    const overlays = body.querySelectorAll(".mb-lightbox-overlay");
+    assert.equal(overlays.length > 0, true);
+    const buttons = overlays[0].querySelectorAll("button");
+    const themeBtn = buttons.find((b) => b.title && b.title.includes("theme"));
+    assert.equal(Boolean(themeBtn), true);
+
+    // Clicking theme button in lightbox delegates to global cycleTheme
+    await themeBtn.click();
+
+    // Global settings MUST now be updated to the next theme
+    assert.notEqual(plugin.settings.theme, "claude");
+
+    if (typeof closeLightbox === "function") closeLightbox();
+  } finally {
+    restoreObsidian();
+    delete global.ResizeObserver;
+    delete global.document;
+    delete global.window;
+  }
+});
+

@@ -3308,7 +3308,7 @@ var MermaidBoostPlugin = class extends Plugin {
   openFullscreenLightbox(sourceSvg, diagramMeta) {
     const block = sourceSvg && sourceSvg.closest && sourceSvg.closest(".mermaid-boost-card");
     const hasLocalThemeOverride = Boolean(
-      block && (block._mbDirectives && block._mbDirectives.theme || block.dataset && (block.dataset.mbTheme || block.dataset.mbDirective))
+      block && block._mbDirectives && block._mbDirectives.theme
     );
     const effectiveSettings = block && block._mbEffectiveSettings || this.settings;
     let closeFn = null;
