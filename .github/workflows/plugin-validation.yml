@@ -1,0 +1,76 @@
+name: Plugin Validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-validation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate Obsidian plugin metadata
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate metadata and release files
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+          const versions = JSON.parse(fs.readFileSync('versions.json', 'utf8'));
+
+          const required = [
+            'id',
+            'name',
+            'version',
+            'minAppVersion',
+            'description',
+            'author',
+            'isDesktopOnly',
+          ];
+
+          for (const key of required) {
+            if (!(key in manifest)) {
+              throw new Error(`manifest.json is missing required field: ${key}`);
+            }
+          }
+
+          if (typeof manifest.isDesktopOnly !== 'boolean') {
+            throw new Error('manifest.json field "isDesktopOnly" must be a boolean');
+          }
+
+          if (!/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(manifest.version)) {
+            throw new Error(`manifest.json has an invalid version: ${manifest.version}`);
+          }
+
+          if (pkg.version !== manifest.version) {
+            throw new Error(
+              `package.json version ${pkg.version} does not match manifest.json version ${manifest.version}`,
+            );
+          }
+
+          if (versions[manifest.version] !== manifest.minAppVersion) {
+            throw new Error(
+              `versions.json must map ${manifest.version} to ${manifest.minAppVersion}`,
+            );
+          }
+
+          for (const file of ['main.js', 'manifest.json', 'styles.css']) {
+            if (!fs.existsSync(file)) {
+              throw new Error(`Required plugin file is missing: ${file}`);
+            }
+          }
+          NODE
