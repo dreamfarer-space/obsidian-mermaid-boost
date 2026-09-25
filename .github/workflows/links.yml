@@ -1,0 +1,46 @@
+name: Documentation Links
+
+on:
+  pull_request:
+    paths:
+      - "README.md"
+      - "README.zh-CN.md"
+      - "CHANGELOG.md"
+      - ".github/workflows/links.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "README.md"
+      - "README.zh-CN.md"
+      - "CHANGELOG.md"
+  schedule:
+    - cron: "41 4 * * 0"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: links-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  links:
+    name: Check documentation links
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Check links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --max-retries 3
+            README.md
+            README.zh-CN.md
+            CHANGELOG.md
+          fail: true
