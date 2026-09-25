@@ -108,3 +108,15 @@ test("validatePluginMetadata passes for current repository and detects schema/ve
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 });
+
+test("styles.css adheres to Obsidian plugin CSS guidelines and contains zero !important rules", () => {
+  const stylesPath = path.resolve(__dirname, "..", "styles.css");
+  const stylesContent = fs.readFileSync(stylesPath, "utf8");
+  const importantMatches = stylesContent.match(/!important/gi) || [];
+  assert.equal(
+    importantMatches.length,
+    0,
+    `styles.css must avoid !important according to Obsidian CSS guidelines (found ${importantMatches.length} occurrences)`
+  );
+});
+
