@@ -57,7 +57,39 @@ Mermaid Boost 会将大型图表优雅地收敛到舒适的阅读宽度内，同
 - **工具栏内联缩放（`−` / `72%` / `+`）** — 随时微调当前图表比例，点击百分比徽标即可一键重置。
 - **双击全屏 Lightbox** — 双击任意图表即可弹出全屏画布，支持鼠标滚轮无级缩放与按住拖拽平移。
 - **一键高清 PNG 导出** — 直接将当前主题样式下的图表导出/复制为高分辨率 PNG 图像。
-- **卡片与细节定制** — 支持独立开关卡片外框、建筑点阵背景（Dot Grid）、节点圆角以及饼图留白裁剪。
+### 3. 单图局部配置指令 (`%% mermaid-boost: ...`)
+
+不同图表往往需要不同的主题、尺寸预设或折叠策略。你可以在 Mermaid 标准注释中直接声明局部覆盖参数：
+
+````markdown
+```mermaid
+%% mermaid-boost: theme=blueprint size=relaxed collapse=false
+flowchart TD
+    A[全局设置兜底] --> B[单图局部覆盖]
+```
+````
+
+> [!TIP]
+> Mermaid 标准语法将 `%%` 识别为注释行，因此在 Obsidian 之外（如 GitHub、GitLab、VS Code）均能正常解析与渲染，保持 100% 语法通用与零锁定。同时兼容紧凑前缀 `%%mb: ...` 以及相邻 Markdown 注释 `<!-- mermaid-boost: ... -->`。
+
+#### 支持的覆盖参数
+
+| 键名 | 作用说明 | 可选值 | 示例 |
+| :--- | :--- | :--- | :--- |
+| **`theme`** | 覆盖当前图表主题配色与字体 | 29 款主题 ID（如 `blueprint`、`nord`、`claude` 等） | `theme=blueprint` |
+| **`size`** | 覆盖尺寸预设与可读缩放下限 | `compact` (`s`)、`balanced` (`m`)、`relaxed` (`l`)、`original` (`1:1`) | `size=relaxed` |
+| **`collapse`** | 覆盖超高图表自动折叠行为 | `true` / `false`（支持 `yes` / `no`、`1` / `0`） | `collapse=false` |
+| **`frame`** | 控制图表卡片边框与背景底色 | `true` / `false` (`none`) | `frame=false` |
+| **`grid`** | 控制点阵画布背景（Dot Grid） | `true` / `false` (`dot` / `none`) | `grid=true` |
+| **`header`** | 控制顶部微型工具栏显示 | `true` / `false` | `header=false` |
+| **`radius`** | 控制流程图节点与卡片圆角半径 | 像素数值（`0` 至 `64`，例如 `8`、`12px`） | `radius=8` |
+
+#### 优先级与降级规则
+
+1. **单图指令最高优先** — 图表代码内的 `%% mermaid-boost: ...` 显式声明优先于全局设置。
+2. **交互缩放叠加计算** — 用户点击工具栏放大/缩小按钮基于该图表的基础尺寸实时微调。
+3. **全局配置无缝兜底** — 未显式覆盖的键名均自动回退至 Obsidian 插件设置面板中的全局配置。
+4. **安全静默降级** — 若指令包含拼写错误、非法参数或未知键名，插件会自动忽略无效项并保持正常渲染，绝不污染或篡改全局设置。
 
 ---
 

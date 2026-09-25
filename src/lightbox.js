@@ -14,6 +14,13 @@ const { extractSvgNaturalSize } = require("./sizing.js");
 const { THEMES, nextThemeKey } = require("./themes.js");
 const { beautifySvgDom } = require("./beautify.js");
 
+/**
+ * Opens the diagram in an immersive fullscreen lightbox viewer with pan/zoom and action controls.
+ * @param {SVGElement} sourceSvg - The source diagram SVG to clone and view.
+ * @param {Object} diagramMeta - Metadata classifying diagram type, label, and natural dimensions.
+ * @param {Object} [options={}] - Lightbox actions and configuration options.
+ * @returns {Function} Close function to dismiss the fullscreen lightbox.
+ */
 function openFullscreenLightbox(sourceSvg, diagramMeta, options = {}) {
   const {
     settings = {},
@@ -120,6 +127,12 @@ function openFullscreenLightbox(sourceSvg, diagramMeta, options = {}) {
     let nextKey;
     if (typeof cycleTheme === "function") {
       nextKey = await cycleTheme();
+      if (nextKey) {
+        settings.theme = nextKey;
+        if (THEMES[nextKey] && Number.isFinite(THEMES[nextKey].defaultRadius)) {
+          settings.nodeRadius = THEMES[nextKey].defaultRadius;
+        }
+      }
     } else {
       nextKey = nextThemeKey(settings.theme);
       settings.theme = nextKey;

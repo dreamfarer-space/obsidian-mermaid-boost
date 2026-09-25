@@ -67,6 +67,40 @@ body.mermaid-boost-enabled.mermaid-boost-dot-grid:not([data-mb-has-pattern="true
   background-position: -1px -1px;
 }
 
+/* Per-diagram frame override classes */
+body.mermaid-boost-enabled .markdown-rendered .mermaid.mermaid-boost-card.mb-no-frame,
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card.mb-no-frame {
+  border-color: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body.mermaid-boost-enabled:not(.mermaid-boost-frame) .markdown-rendered .mermaid.mermaid-boost-card.mb-has-frame,
+body.mermaid-boost-enabled:not(.mermaid-boost-frame) .mermaid.mermaid-boost-card.mb-has-frame {
+  border: 1px solid var(--mb-card-border, rgba(128, 128, 128, 0.3)) !important;
+  border-color: var(--mb-card-border, rgba(128, 128, 128, 0.3)) !important;
+  background-color: var(--mb-card-bg, #faf9f5) !important;
+  background-image: var(--mb-card-bg-image, none) !important;
+  background-size: var(--mb-card-bg-size, auto) !important;
+}
+
+/* Per-diagram grid override classes */
+body.mermaid-boost-enabled .markdown-rendered .mermaid.mermaid-boost-card.mb-has-grid:not([data-mb-has-pattern="true"]),
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card.mb-has-grid:not([data-mb-has-pattern="true"]) {
+  background-image: radial-gradient(
+    var(--mb-grid-dot, rgba(128, 128, 128, 0.16)) 1.15px,
+    transparent 1.15px
+  ) !important;
+  background-size: 16px 16px !important;
+  background-position: -1px -1px !important;
+}
+
+body.mermaid-boost-enabled .markdown-rendered .mermaid.mermaid-boost-card.mb-no-grid,
+body.mermaid-boost-enabled .mermaid.mermaid-boost-card.mb-no-grid {
+  background-image: var(--mb-card-bg-image, none) !important;
+}
+
 /* 7-Group Interactive Theme Gallery in Settings Tab */
 .mb-theme-gallery {
   margin: 10px 0 18px;
