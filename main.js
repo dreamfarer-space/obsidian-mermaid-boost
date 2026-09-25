@@ -1896,7 +1896,11 @@ var require_lightbox = __commonJS({
         else if (e.key === "0") fitToScreen();
       };
       window.addEventListener("keydown", onKeyDown);
-      window.requestAnimationFrame(fitToScreen);
+      if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+        window.requestAnimationFrame(fitToScreen);
+      } else {
+        fitToScreen();
+      }
       return closeLightbox;
     }
     module2.exports = {
@@ -2036,6 +2040,10 @@ var MermaidBoostPlugin = class extends Plugin {
       if (expandBar) expandBar.remove();
       const svg = block.querySelector("svg");
       if (svg) {
+        if (svg._mbDblClickHandler && typeof svg.removeEventListener === "function") {
+          svg.removeEventListener("dblclick", svg._mbDblClickHandler);
+          delete svg._mbDblClickHandler;
+        }
         if (svg.dataset.mbOrigViewBox) {
           svg.setAttribute("viewBox", svg.dataset.mbOrigViewBox);
         }
@@ -2164,7 +2172,8 @@ var MermaidBoostPlugin = class extends Plugin {
     this._isDecorating = false;
     const scheduleFlush = () => {
       if (this._flushTimer) return;
-      this._flushTimer = window.setTimeout(() => {
+      const setFn = typeof window !== "undefined" ? window.setTimeout : setTimeout;
+      this._flushTimer = setFn(() => {
         this._flushTimer = null;
         if (this._isDecorating || this._pendingBlocks.size === 0) return;
         this._isDecorating = true;
@@ -2193,7 +2202,8 @@ var MermaidBoostPlugin = class extends Plugin {
             if (!isElementNode(node)) continue;
             if (node.classList && (node.classList.contains("mermaid") || node.classList.contains("mermaid-boost-card"))) {
               this.unobserveDiagram(node);
-            } else if (typeof node.querySelectorAll === "function") {
+            }
+            if (typeof node.querySelectorAll === "function") {
               const removedMermaids = node.querySelectorAll(".mermaid, .mermaid-boost-card");
               for (let i = 0; i < removedMermaids.length; i++) {
                 this.unobserveDiagram(removedMermaids[i]);
@@ -2327,6 +2337,7 @@ var MermaidBoostPlugin = class extends Plugin {
         e.stopPropagation();
         this.openFullscreenLightbox(svg, diagramMeta);
       };
+      svg._mbDblClickHandler = onDblClick;
       if (typeof this.registerDomEvent === "function") {
         this.registerDomEvent(svg, "dblclick", onDblClick);
       } else {
@@ -2543,7 +2554,20 @@ var MermaidBoostPlugin = class extends Plugin {
     this.scheduleResizeBatch();
   }
   ensureExpandBar(block, fullHeight, collapsedHeight) {
-    let bar = block.querySelector(":scope > .mb-expand-bar");
+    let existingBars = [];
+    if (typeof block.querySelectorAll === "function") {
+      try {
+        existingBars = Array.from(block.querySelectorAll(":scope > .mb-expand-bar"));
+      } catch (_e) {
+        existingBars = Array.from(block.querySelectorAll(".mb-expand-bar"));
+      }
+    }
+    let bar = existingBars && existingBars[0] || (typeof block.querySelector === "function" ? block.querySelector(":scope > .mb-expand-bar") : null);
+    if (existingBars && existingBars.length > 1) {
+      for (let i = 1; i < existingBars.length; i++) {
+        if (typeof existingBars[i].remove === "function") existingBars[i].remove();
+      }
+    }
     if (!bar) {
       bar = document.createElement("div");
       bar.className = "mb-expand-bar";
@@ -2564,7 +2588,20 @@ var MermaidBoostPlugin = class extends Plugin {
   }
   ensureToolbar(block, svg, diagramMeta, displayPercent) {
     const renderKey = `${diagramMeta.type}-${displayPercent}`;
-    let toolbar = block.querySelector(":scope > .mb-toolbar");
+    let existingToolbars = [];
+    if (typeof block.querySelectorAll === "function") {
+      try {
+        existingToolbars = Array.from(block.querySelectorAll(":scope > .mb-toolbar"));
+      } catch (_e) {
+        existingToolbars = Array.from(block.querySelectorAll(".mb-toolbar"));
+      }
+    }
+    let toolbar = existingToolbars && existingToolbars[0] || (typeof block.querySelector === "function" ? block.querySelector(":scope > .mb-toolbar") : null);
+    if (existingToolbars && existingToolbars.length > 1) {
+      for (let i = 1; i < existingToolbars.length; i++) {
+        if (typeof existingToolbars[i].remove === "function") existingToolbars[i].remove();
+      }
+    }
     if (toolbar && toolbar.dataset && toolbar.dataset.mbRenderKey === renderKey) {
       return;
     }

@@ -212,7 +212,11 @@ function openFullscreenLightbox(sourceSvg, diagramMeta, options = {}) {
   };
   window.addEventListener("keydown", onKeyDown);
 
-  window.requestAnimationFrame(fitToScreen);
+  if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+    window.requestAnimationFrame(fitToScreen);
+  } else {
+    fitToScreen();
+  }
   return closeLightbox;
 }
 
