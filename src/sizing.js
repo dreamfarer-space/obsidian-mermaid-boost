@@ -268,7 +268,7 @@ function computeSmartDiagramSize(naturalSize, diagramMeta, settings = {}, contai
     availableWidth,
     Math.max(Math.min(40, availableWidth), Math.round(natW * finalScale))
   );
-  const renderHeight = Math.max(30, Math.round(natH * finalScale));
+  const renderHeight = Math.max(1, Math.round(natH * finalScale));
 
   const needsHeightCollapse =
     Boolean(merged.autoCollapseTall) &&

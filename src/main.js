@@ -590,7 +590,7 @@ class MermaidBoostPlugin extends Plugin {
       userZoomFactor > 1
         ? Math.max(minW, scaledW)
         : Math.min(containerWidth, Math.max(minW, scaledW));
-    const finalHeight = Math.max(36, Math.round(sizing.height * userZoomFactor));
+    const finalHeight = Math.max(1, Math.round(sizing.height * userZoomFactor));
     const displayPercent = Math.round(sizing.scale * userZoomFactor * 100);
 
     const targetW = `${finalWidth}px`;

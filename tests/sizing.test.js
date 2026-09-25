@@ -147,4 +147,15 @@ test("computeSmartDiagramSize scales down oversized diagrams while enforcing min
   assert.equal(sizeHugeSquare.scale, 0.025);
   assert.equal(sizeHugeSquare.width, 40);
   assert.equal(sizeHugeSquare.height, 40);
+
+  // 7. Wide banner diagram in narrow container preserves aspect ratio without independent height minimum
+  const sizeWideBanner = computeSmartDiagramSize(
+    { width: 1600, height: 200 },
+    { type: "flowchart", orientation: "horizontal" },
+    DEFAULT_SETTINGS,
+    40
+  );
+  assert.equal(sizeWideBanner.scale, 0.025);
+  assert.equal(sizeWideBanner.width, 40);
+  assert.equal(sizeWideBanner.height, 5);
 });

@@ -971,7 +971,7 @@ var require_sizing = __commonJS({
         availableWidth,
         Math.max(Math.min(40, availableWidth), Math.round(natW * finalScale))
       );
-      const renderHeight = Math.max(30, Math.round(natH * finalScale));
+      const renderHeight = Math.max(1, Math.round(natH * finalScale));
       const needsHeightCollapse = Boolean(merged.autoCollapseTall) && merged.sizePreset !== "original" && renderHeight > maxHeight * 1.12;
       return {
         naturalWidth: natW,
@@ -2379,7 +2379,7 @@ var MermaidBoostPlugin = class extends Plugin {
     const minW = Math.min(48, Math.max(1, containerWidth));
     const scaledW = Math.round(sizing.width * userZoomFactor);
     const finalWidth = userZoomFactor > 1 ? Math.max(minW, scaledW) : Math.min(containerWidth, Math.max(minW, scaledW));
-    const finalHeight = Math.max(36, Math.round(sizing.height * userZoomFactor));
+    const finalHeight = Math.max(1, Math.round(sizing.height * userZoomFactor));
     const displayPercent = Math.round(sizing.scale * userZoomFactor * 100);
     const targetW = `${finalWidth}px`;
     const targetH = `${finalHeight}px`;
