@@ -4,7 +4,8 @@
   "description": "Smart compact sizing, 29 themes across 7 groups, interactive zoom/pan lightbox, and 3x HD PNG export for Obsidian Mermaid diagrams.",
   "main": "main.js",
   "scripts": {
-    "test": "node --test lib.test.js"
+    "test": "node --test lib.test.js",
+    "validate": "node scripts/validate-plugin.js"
   },
   "keywords": [
     "obsidian",
