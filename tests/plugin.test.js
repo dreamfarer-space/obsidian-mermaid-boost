@@ -46,19 +46,23 @@ test("MermaidBoostPlugin main.js decorates .mermaid blocks, applies compact sizi
       "aria-roledescription": "flowchart-v2",
       viewBox: "0 0 320 1500",
     }, [node]);
+    const prio = {};
     svg.style["max-width"] = "500px";
-    svg.style.setProperty = function (k, v) {
+    svg.style.setProperty = function (k, v, p) {
       this[k] = v;
+      prio[k] = p || "";
     };
     svg.style.removeProperty = function (k) {
       delete this[k];
+      delete prio[k];
     };
     svg.style.getPropertyValue = function (k) {
       return this[k] || "";
     };
-    svg.style.getPropertyPriority = function (_k) {
-      return "";
+    svg.style.getPropertyPriority = function (k) {
+      return prio[k] || "";
     };
+    svg.style.setProperty("height", "900px", "important");
     svg.addEventListener = () => {};
 
     const addedChildren = [];
@@ -154,6 +158,10 @@ test("MermaidBoostPlugin main.js decorates .mermaid blocks, applies compact sizi
     assert.equal(svg.dataset.mbOrigViewBox, undefined);
     assert.equal(svg.dataset.mbDblClickBound, undefined);
     assert.equal(svg.style["max-width"], "500px");
+    assert.equal(svg.style.height, "900px");
+    assert.equal(svg.style.getPropertyPriority("height"), "important");
+    assert.equal(svg.dataset.mbOrigStyleHeight, undefined);
+    assert.equal(svg.dataset.mbOrigStyleHeightPriority, undefined);
     assert.equal(svg.style.width, undefined);
     assert.equal(block.classList.contains("mermaid-boost-card"), false);
     assert.equal(global.document.body.dataset.mbTheme, undefined);
@@ -163,6 +171,7 @@ test("MermaidBoostPlugin main.js decorates .mermaid blocks, applies compact sizi
     plugin.decorateMermaidBlock(block);
     assert.equal(svg.dataset.mbInitialized, "true");
     assert.equal(svg.style["max-width"], "none");
+    assert.equal(svg.dataset.mbOrigStyleMaxWidth, "500px");
     assert.equal(block.classList.contains("mermaid-boost-card"), true);
   } finally {
     Module._load = origLoad;
