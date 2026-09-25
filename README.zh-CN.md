@@ -169,9 +169,21 @@ flowchart LR
 
 ## 本地开发
 
-本仓库直接提供零构建步骤的运行时 JavaScript 代码，便于直接阅读、测试与二次开发。
+Mermaid Boost 采用 `src/` 模块化源码架构，并通过 `esbuild` 构建打包生成 Obsidian 运行时单文件 `main.js`。
 
 ```bash
+# 安装开发依赖
+npm install
+
+# 构建打包 main.js
+npm run build
+
+# 启动源码监听热开发模式
+npm run dev
+
+# 校验已提交的 main.js 是否与 src/ 源码严格一致（无漂移）
+npm run build:check
+
 # 运行 Node 单元测试套件（需 Node.js 22+）
 npm test
 
@@ -180,18 +192,37 @@ npm run validate
 
 # 运行 JavaScript 语法检查
 node --check main.js
-node --check lib.js
-node --check lib.test.js
+node --check scripts/build.js
 node --check scripts/validate-plugin.js
+node --check src/main.js
+node --check src/settings.js
+node --check src/sizing.js
+node --check src/themes.js
+node --check src/beautify.js
+node --check src/lightbox.js
+node --check src/export.js
+node --check tests/helpers.js
+node --check tests/sizing.test.js
+node --check tests/themes.test.js
+node --check tests/beautify.test.js
+node --check tests/plugin.test.js
+node --check tests/validation.test.js
 ```
 
 ### 仓库目录结构
 
 | 路径 | 职责说明 |
 | :--- | :--- |
-| `main.js` | Obsidian 插件生命周期、DOM 监听、工具栏控件、全屏 Lightbox、高清 PNG 导出与设置页 |
-| `lib.js` | 核心尺寸计算引擎（`SIZE_PRESETS`）、29 款主题色板（`THEMES`）与 SVG 美化纯函数 |
-| `lib.test.js` | 基于 Node 的自动化测试套件，覆盖尺寸计算、主题完整性与 SVG 转换 |
+| `src/main.js` | Obsidian 插件入口，负责插件生命周期、DOM 监听及图表卡片增强渲染 |
+| `src/settings.js` | 尺寸预设（`SIZE_PRESETS`）、默认设置项（`DEFAULT_SETTINGS`）与 Obsidian 设置面板 |
+| `src/sizing.js` | 核心尺寸计算引擎、图表类型与朝向识别、饼图多余边距裁剪 |
+| `src/themes.js` | 29 款主题色板（`THEMES`）、主题分组（`THEME_GROUPS`）与主题规则解析器 |
+| `src/beautify.js` | SVG DOM 美化渲染管线、节点分级着色及拓扑关系分析 |
+| `src/lightbox.js` | 全屏交互式平移/缩放弹窗组件及控制操作栏 |
+| `src/export.js` | 3x 高清 PNG 导出引擎与实时 CSS 变量解析 |
+| `tests/` | 基于 Node 内置 Test Runner 的单元与集成测试套件（覆盖尺寸、主题、美化、插件、校验） |
+| `main.js` | 由 `esbuild` 自动打包生成的 Obsidian 独立运行时发布产物 |
+| `scripts/build.js` | 基于 `esbuild` 的构建脚本，支持 `--check` 与 `--watch` 模式 |
 | `scripts/validate-plugin.js` | 插件元数据 Schema、发布标签与文档版本号一致性校验脚本 |
 | `styles.css` | 图表卡片、工具栏按钮、全屏 Lightbox 弹窗与主题相关样式 |
 | `manifest.json` | Obsidian 插件清单元数据（`1.0.2`，`minAppVersion: 1.5.0`） |
@@ -200,13 +231,13 @@ node --check scripts/validate-plugin.js
 ### 发布流程
 
 1. 同步更新 `manifest.json`、`package.json`、`versions.json`、`CHANGELOG.md`、`README.md` 与 `README.zh-CN.md` 中的版本信息。
-2. 本地运行 `npm test` 与 `npm run validate`，确保测试通过且元数据与文档无版本漂移。
+2. 本地运行 `npm run build`、`npm run build:check`、`npm test` 与 `npm run validate`，确保构建产物同步、测试通过且元数据与文档无版本漂移。
 3. 推送与 `manifest.json` 完全一致的 `x.y.z` 标签（`TAG=$(node -p "require('./manifest.json').version") && git tag "$TAG" && git push origin "$TAG"`），GitHub Actions 将自动执行测试、校验标签与元数据、打包 `mermaid-boost-<version>.zip` 并发布包含 `main.js`、`manifest.json`、`styles.css` 及 ZIP 压缩包的 GitHub Release。
 
 ---
 
 ## 贡献与许可证
 
-欢迎提交 Issue 与 Pull Request！如果修改了 `lib.js` 中的尺寸计算或主题定义，请在提交前运行 `npm test` 确保测试全部通过。
+欢迎提交 Issue 与 Pull Request！如果修改了 `src/` 中的尺寸计算、主题定义或插件逻辑，请在提交前运行 `npm run build`、`npm run build:check`、`npm test` 与 `npm run validate` 确保测试全部通过且构建产物与源码保持同步。
 
 本项目基于 **[MIT License](LICENSE)** 开源。

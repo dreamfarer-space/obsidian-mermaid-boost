@@ -47,6 +47,15 @@ body.mermaid-boost-enabled .mermaid.mermaid-boost-card {
   box-sizing: border-box;
 }
 
+/* Card Frame toggle: when disabled, remove border and background */
+body.mermaid-boost-enabled:not(.mermaid-boost-frame) .markdown-rendered .mermaid.mermaid-boost-card,
+body.mermaid-boost-enabled:not(.mermaid-boost-frame) .mermaid.mermaid-boost-card {
+  border-color: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
 /* Optional user Dot-grid background when theme has no intrinsic pattern */
 body.mermaid-boost-enabled.mermaid-boost-dot-grid:not([data-mb-has-pattern="true"]) .markdown-rendered .mermaid.mermaid-boost-card,
 body.mermaid-boost-enabled.mermaid-boost-dot-grid:not([data-mb-has-pattern="true"]) .mermaid.mermaid-boost-card {
