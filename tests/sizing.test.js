@@ -127,4 +127,35 @@ test("computeSmartDiagramSize scales down oversized diagrams while enforcing min
     280
   );
   assert.ok(sizeNarrow.width <= 248, `Expected width <= 248, got ${sizeNarrow.width}`);
+
+  // 5. Ultra-narrow pane/mobile split (width 120px) -> constrains down properly without overflow
+  const sizeUltraNarrow = computeSmartDiagramSize(
+    { width: 640, height: 260 },
+    { type: "flowchart", orientation: "horizontal" },
+    DEFAULT_SETTINGS,
+    120
+  );
+  assert.ok(sizeUltraNarrow.width <= 88, `Expected width <= 88 (120-32), got ${sizeUltraNarrow.width}`);
+
+  // 6. Huge diagram in narrow container where scaleW < 0.05 -> constrains finalScale to scaleW
+  const sizeHugeSquare = computeSmartDiagramSize(
+    { width: 1600, height: 1600 },
+    { type: "flowchart", orientation: "square" },
+    DEFAULT_SETTINGS,
+    40
+  );
+  assert.equal(sizeHugeSquare.scale, 0.025);
+  assert.equal(sizeHugeSquare.width, 40);
+  assert.equal(sizeHugeSquare.height, 40);
+
+  // 7. Wide banner diagram in narrow container preserves aspect ratio without independent height minimum
+  const sizeWideBanner = computeSmartDiagramSize(
+    { width: 1600, height: 200 },
+    { type: "flowchart", orientation: "horizontal" },
+    DEFAULT_SETTINGS,
+    40
+  );
+  assert.equal(sizeWideBanner.scale, 0.025);
+  assert.equal(sizeWideBanner.width, 40);
+  assert.equal(sizeWideBanner.height, 5);
 });

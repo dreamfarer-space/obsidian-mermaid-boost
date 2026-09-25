@@ -164,6 +164,7 @@ test("MermaidBoostPlugin main.js decorates .mermaid blocks, applies compact sizi
     assert.equal(svg.dataset.mbOrigStyleHeightPriority, undefined);
     assert.equal(svg.style.width, undefined);
     assert.equal(block.classList.contains("mermaid-boost-card"), false);
+    assert.equal(block.dataset.mbObserved, undefined);
     assert.equal(global.document.body.dataset.mbTheme, undefined);
     assert.equal(global.document.body.dataset.mbHasPattern, undefined);
 
