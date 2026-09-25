@@ -111,6 +111,43 @@ class MermaidBoostPlugin extends Plugin {
         if (svg.dataset.mbOrigViewBox) {
           svg.setAttribute("viewBox", svg.dataset.mbOrigViewBox);
         }
+        if (svg.style) {
+          if (typeof svg.style.setProperty === "function") {
+            if (svg.dataset.mbOrigStyleWidth) {
+              svg.style.setProperty(
+                "width",
+                svg.dataset.mbOrigStyleWidth,
+                svg.dataset.mbOrigStyleWidthPriority || ""
+              );
+            } else if (typeof svg.style.removeProperty === "function") {
+              svg.style.removeProperty("width");
+            }
+
+            if (svg.dataset.mbOrigStyleHeight) {
+              svg.style.setProperty(
+                "height",
+                svg.dataset.mbOrigStyleHeight,
+                svg.dataset.mbOrigStyleHeightPriority || ""
+              );
+            } else if (typeof svg.style.removeProperty === "function") {
+              svg.style.removeProperty("height");
+            }
+
+            if (svg.dataset.mbOrigStyleMaxWidth) {
+              svg.style.setProperty(
+                "max-width",
+                svg.dataset.mbOrigStyleMaxWidth,
+                svg.dataset.mbOrigStyleMaxWidthPriority || ""
+              );
+            } else if (typeof svg.style.removeProperty === "function") {
+              svg.style.removeProperty("max-width");
+            }
+          } else if (typeof svg.style.removeProperty === "function") {
+            svg.style.removeProperty("width");
+            svg.style.removeProperty("height");
+            svg.style.removeProperty("max-width");
+          }
+        }
         delete svg.dataset.mbInitialized;
         delete svg.dataset.mbDblClickBound;
         delete svg.dataset.mbOrigViewBox;
@@ -118,13 +155,14 @@ class MermaidBoostPlugin extends Plugin {
         delete svg.dataset.mbNaturalHeight;
         delete svg.dataset.mbNaturalX;
         delete svg.dataset.mbNaturalY;
+        delete svg.dataset.mbOrigStyleWidth;
+        delete svg.dataset.mbOrigStyleWidthPriority;
+        delete svg.dataset.mbOrigStyleHeight;
+        delete svg.dataset.mbOrigStyleHeightPriority;
+        delete svg.dataset.mbOrigStyleMaxWidth;
+        delete svg.dataset.mbOrigStyleMaxWidthPriority;
         delete svg.dataset.mbViewBoxPadded;
         delete svg.dataset.mbStyledTheme;
-        if (svg.style && typeof svg.style.removeProperty === "function") {
-          svg.style.removeProperty("width");
-          svg.style.removeProperty("height");
-          svg.style.removeProperty("max-width");
-        }
       }
       if (block.dataset) {
         delete block.dataset.mbDiagramType;
@@ -314,7 +352,7 @@ class MermaidBoostPlugin extends Plugin {
       block.classList.add("mermaid-boost-card");
     }
 
-    // Cache original pristine viewBox and dimensions once per rendered SVG element
+    // Cache original pristine viewBox, dimensions, and inline styles once per rendered SVG element
     if (!svg.dataset.mbInitialized) {
       const currentVb = svg.getAttribute("viewBox");
       if (currentVb) {
@@ -326,6 +364,46 @@ class MermaidBoostPlugin extends Plugin {
         svg.dataset.mbNaturalY = String(nat.y);
         svg.dataset.mbNaturalWidth = String(nat.width);
         svg.dataset.mbNaturalHeight = String(nat.height);
+      }
+      if (svg.style) {
+        const origW =
+          (typeof svg.style.getPropertyValue === "function"
+            ? svg.style.getPropertyValue("width")
+            : svg.style.width) || "";
+        const origWPrio =
+          typeof svg.style.getPropertyPriority === "function"
+            ? svg.style.getPropertyPriority("width")
+            : "";
+        if (origW) {
+          svg.dataset.mbOrigStyleWidth = origW;
+          if (origWPrio) svg.dataset.mbOrigStyleWidthPriority = origWPrio;
+        }
+
+        const origH =
+          (typeof svg.style.getPropertyValue === "function"
+            ? svg.style.getPropertyValue("height")
+            : svg.style.height) || "";
+        const origHPrio =
+          typeof svg.style.getPropertyPriority === "function"
+            ? svg.style.getPropertyPriority("height")
+            : "";
+        if (origH) {
+          svg.dataset.mbOrigStyleHeight = origH;
+          if (origHPrio) svg.dataset.mbOrigStyleHeightPriority = origHPrio;
+        }
+
+        const origMW =
+          (typeof svg.style.getPropertyValue === "function"
+            ? svg.style.getPropertyValue("max-width")
+            : svg.style.maxWidth || svg.style["max-width"]) || "";
+        const origMWPrio =
+          typeof svg.style.getPropertyPriority === "function"
+            ? svg.style.getPropertyPriority("max-width")
+            : "";
+        if (origMW) {
+          svg.dataset.mbOrigStyleMaxWidth = origMW;
+          if (origMWPrio) svg.dataset.mbOrigStyleMaxWidthPriority = origMWPrio;
+        }
       }
       svg.dataset.mbInitialized = "true";
     }

@@ -46,11 +46,18 @@ test("MermaidBoostPlugin main.js decorates .mermaid blocks, applies compact sizi
       "aria-roledescription": "flowchart-v2",
       viewBox: "0 0 320 1500",
     }, [node]);
+    svg.style["max-width"] = "500px";
     svg.style.setProperty = function (k, v) {
       this[k] = v;
     };
     svg.style.removeProperty = function (k) {
       delete this[k];
+    };
+    svg.style.getPropertyValue = function (k) {
+      return this[k] || "";
+    };
+    svg.style.getPropertyPriority = function (_k) {
+      return "";
     };
     svg.addEventListener = () => {};
 
@@ -92,6 +99,7 @@ test("MermaidBoostPlugin main.js decorates .mermaid blocks, applies compact sizi
 
     global.document = {
       body: {
+        dataset: {},
         classList: {
           contains: () => false,
           add: () => {},
@@ -127,6 +135,7 @@ test("MermaidBoostPlugin main.js decorates .mermaid blocks, applies compact sizi
     };
 
     plugin.decorateMermaidBlock(block);
+    plugin.applyGlobalThemeVariables();
 
     assert.equal(block.classList.contains("mermaid-boost-card"), true);
     assert.equal(block.classList.contains("is-mb-collapsible"), true);
@@ -136,17 +145,24 @@ test("MermaidBoostPlugin main.js decorates .mermaid blocks, applies compact sizi
     assert.equal(svg.dataset.mbInitialized, "true");
     assert.ok(addedChildren.some((c) => c.className === "mb-toolbar"));
     assert.ok(addedChildren.some((c) => c.className === "mb-expand-bar"));
+    assert.notEqual(global.document.body.dataset.mbTheme, undefined);
+    assert.notEqual(global.document.body.dataset.mbHasPattern, undefined);
 
     // Test lifecycle unload cleanup
     plugin.onunload();
     assert.equal(svg.dataset.mbInitialized, undefined);
     assert.equal(svg.dataset.mbOrigViewBox, undefined);
     assert.equal(svg.dataset.mbDblClickBound, undefined);
+    assert.equal(svg.style["max-width"], "500px");
+    assert.equal(svg.style.width, undefined);
     assert.equal(block.classList.contains("mermaid-boost-card"), false);
+    assert.equal(global.document.body.dataset.mbTheme, undefined);
+    assert.equal(global.document.body.dataset.mbHasPattern, undefined);
 
     // Test re-decoration after unload recaches and decorates cleanly
     plugin.decorateMermaidBlock(block);
     assert.equal(svg.dataset.mbInitialized, "true");
+    assert.equal(svg.style["max-width"], "none");
     assert.equal(block.classList.contains("mermaid-boost-card"), true);
   } finally {
     Module._load = origLoad;
