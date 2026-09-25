@@ -645,3 +645,80 @@ test("Per-diagram override: findDiagramTextFromEditor does not abort when first 
   const result = findDiagramTextFromEditor(block, appMock);
   assert.equal(result, docText);
 });
+
+test("Per-diagram override: extractMermaidCodeBlocks follows CommonMark fence matching rules", () => {
+  const { extractMermaidCodeBlocks } = require("../src/directive.js");
+
+  const doc = [
+    "# Document with varying fences",
+    "````mermaid",
+    "%% mermaid-boost: theme=dracula",
+    "flowchart TD",
+    "  A --> B",
+    "```",
+    "nested run",
+    "````",
+    "",
+    "```mermaid",
+    "%% mb: size=relaxed",
+    "graph LR",
+    "C --> D",
+    "```not a closer",
+    "```",
+  ].join("\n");
+
+  const blocks = extractMermaidCodeBlocks(doc);
+  assert.equal(blocks.length, 2);
+  assert.equal(blocks[0].includes("%% mermaid-boost: theme=dracula"), true);
+  assert.equal(blocks[0].includes("nested run"), true);
+  assert.equal(blocks[1].includes("%% mb: size=relaxed"), true);
+  assert.equal(blocks[1].includes("```not a closer"), true);
+});
+
+test("Per-diagram override: fullscreen lightbox theme cycling does not mutate global plugin settings", async () => {
+  const restoreObsidian = setupObsidianMock();
+  MockResizeObserver.instances = [];
+  global.ResizeObserver = MockResizeObserver;
+
+  try {
+    const { block, svg, host } = createDiagramBlock();
+    const { body } = setupGlobalEnvironment([block]);
+    body.appendChild(host);
+
+    const MermaidBoostPlugin = require("../src/main.js");
+    const plugin = new MermaidBoostPlugin({}, {});
+    await plugin.loadSettings();
+
+    // Global settings theme starts as 'claude'
+    assert.equal(plugin.settings.theme, "claude");
+
+    // Diagram has local directive
+    block.dataset.mbDirective = "theme=dracula";
+    plugin.decorateMermaidBlock(block);
+
+    const closeLightbox = plugin.openFullscreenLightbox(svg, { type: "flowchart", label: "Flowchart" });
+
+    // Find the theme switcher button in lightbox overlay
+    const overlays = body.querySelectorAll(".mb-lightbox-overlay");
+    assert.equal(overlays.length > 0, true);
+    const buttons = overlays[0].querySelectorAll("button");
+    const themeBtn = buttons.find((b) => b.title && b.title.includes("theme"));
+    assert.equal(Boolean(themeBtn), true);
+
+    // Click theme button in lightbox
+    await themeBtn.click();
+
+    // Global settings MUST still be 'claude'
+    assert.equal(plugin.settings.theme, "claude");
+
+    // Block local effective settings updated to next theme after dracula
+    assert.notEqual(block._mbEffectiveSettings.theme, "claude");
+
+    if (typeof closeLightbox === "function") closeLightbox();
+  } finally {
+    restoreObsidian();
+    delete global.ResizeObserver;
+    delete global.document;
+    delete global.window;
+  }
+});

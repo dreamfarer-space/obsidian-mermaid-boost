@@ -2062,6 +2062,39 @@ var require_directive = __commonJS({
       }
       return result;
     }
+    function extractMermaidCodeBlocks2(sectionText) {
+      if (typeof sectionText !== "string" || !sectionText.includes("mermaid")) {
+        return [];
+      }
+      const lines = sectionText.split(/\r?\n/);
+      const blocks = [];
+      let inBlock = false;
+      let fenceChar = "";
+      let fenceLength = 0;
+      let blockLines = [];
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (!inBlock) {
+          const openMatch = line.match(/^[ \t]*(`{3,}|~{3,})[ \t]*mermaid\b/i);
+          if (openMatch) {
+            inBlock = true;
+            fenceChar = openMatch[1][0];
+            fenceLength = openMatch[1].length;
+            blockLines = [];
+          }
+        } else {
+          const trimmed = line.trim();
+          if (trimmed.length >= fenceLength && trimmed.startsWith(fenceChar.repeat(fenceLength)) && !trimmed.split("").some((ch) => ch !== fenceChar)) {
+            inBlock = false;
+            blocks.push(blockLines.join("\n"));
+            blockLines = [];
+          } else {
+            blockLines.push(line);
+          }
+        }
+      }
+      return blocks;
+    }
     function findDiagramTextFromEditor(block, app) {
       if (!block || !app || !app.workspace) return null;
       const activeView = typeof app.workspace.getActiveViewOfType === "function" ? app.workspace.getActiveViewOfType(app.workspace.MarkdownView || Object) : null;
@@ -2229,6 +2262,7 @@ var require_directive = __commonJS({
       parseRadius,
       parseDirectiveString,
       extractDirectivesFromText: extractDirectivesFromText2,
+      extractMermaidCodeBlocks: extractMermaidCodeBlocks2,
       findDiagramTextFromEditor,
       extractDirectiveFromElement: extractDirectiveFromElement2,
       resolveEffectiveSettings: resolveEffectiveSettings2
@@ -2251,6 +2285,7 @@ var { resolveLiveCssColor, exportSvgAsPng } = require_export();
 var { openFullscreenLightbox } = require_lightbox();
 var {
   extractDirectivesFromText,
+  extractMermaidCodeBlocks,
   extractDirectiveFromElement,
   resolveEffectiveSettings
 } = require_directive();
@@ -2671,8 +2706,7 @@ var MermaidBoostPlugin = class extends Plugin {
       }
     }
     let sectionOverrides = null;
-    const blockRegex = /```(?:mermaid)\s*\n([\s\S]*?)```/gi;
-    const blockMatches = sectionText ? Array.from(sectionText.matchAll(blockRegex)) : [];
+    const blockMatches = sectionText ? extractMermaidCodeBlocks(sectionText) : [];
     if (sectionText) {
       sectionOverrides = extractDirectivesFromText(sectionText);
       if (Object.keys(sectionOverrides).length > 0 && blockMatches.length <= 1) {
@@ -2709,7 +2743,7 @@ var MermaidBoostPlugin = class extends Plugin {
     if (sectionText) {
       if (blockMatches.length > 0 && blockMatches.length === mermaidBlocks.length) {
         for (let i = 0; i < mermaidBlocks.length; i++) {
-          const rawCode = blockMatches[i][1];
+          const rawCode = blockMatches[i];
           const overrides = extractDirectivesFromText(rawCode);
           if (Object.keys(overrides).length > 0) {
             mermaidBlocks[i]._mbDirectives = overrides;
@@ -3273,12 +3307,27 @@ var MermaidBoostPlugin = class extends Plugin {
    */
   openFullscreenLightbox(sourceSvg, diagramMeta) {
     const block = sourceSvg && sourceSvg.closest && sourceSvg.closest(".mermaid-boost-card");
+    const hasLocalThemeOverride = Boolean(
+      block && (block._mbDirectives && block._mbDirectives.theme || block.dataset && (block.dataset.mbTheme || block.dataset.mbDirective))
+    );
     const effectiveSettings = block && block._mbEffectiveSettings || this.settings;
     let closeFn = null;
     closeFn = openFullscreenLightbox(sourceSvg, diagramMeta, {
       settings: effectiveSettings,
-      saveSettings: () => this.saveSettings(),
-      cycleTheme: () => this.cycleTheme(),
+      saveSettings: () => hasLocalThemeOverride ? Promise.resolve() : this.saveSettings(),
+      cycleTheme: hasLocalThemeOverride ? async () => {
+        const nextKey = nextThemeKey(effectiveSettings.theme);
+        effectiveSettings.theme = nextKey;
+        const themeDef = THEMES[nextKey];
+        if (themeDef && Number.isFinite(themeDef.defaultRadius)) {
+          effectiveSettings.nodeRadius = themeDef.defaultRadius;
+        }
+        if (block) {
+          block._mbEffectiveSettings = effectiveSettings;
+        }
+        new Notice(`Mermaid Boost theme: ${themeDef ? themeDef.name : nextKey}`);
+        return nextKey;
+      } : () => this.cycleTheme(),
       exportSvgAsPng: (svg) => this.exportSvgAsPng(svg, effectiveSettings),
       onClose: () => {
         if (closeFn && this._openLightboxes) {

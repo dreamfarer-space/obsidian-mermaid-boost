@@ -14,6 +14,7 @@ const { resolveLiveCssColor, exportSvgAsPng } = require("./export.js");
 const { openFullscreenLightbox } = require("./lightbox.js");
 const {
   extractDirectivesFromText,
+  extractMermaidCodeBlocks,
   extractDirectiveFromElement,
   resolveEffectiveSettings,
 } = require("./directive.js");
@@ -485,9 +486,8 @@ class MermaidBoostPlugin extends Plugin {
 
     // Attach section directives to container element even if .mermaid has not finished rendering yet
     let sectionOverrides = null;
-    const blockRegex = /```(?:mermaid)\s*\n([\s\S]*?)```/gi;
     const blockMatches = sectionText
-      ? Array.from(sectionText.matchAll(blockRegex))
+      ? extractMermaidCodeBlocks(sectionText)
       : [];
     if (sectionText) {
       sectionOverrides = extractDirectivesFromText(sectionText);
@@ -527,7 +527,7 @@ class MermaidBoostPlugin extends Plugin {
     if (sectionText) {
       if (blockMatches.length > 0 && blockMatches.length === mermaidBlocks.length) {
         for (let i = 0; i < mermaidBlocks.length; i++) {
-          const rawCode = blockMatches[i][1];
+          const rawCode = blockMatches[i];
           const overrides = extractDirectivesFromText(rawCode);
           if (Object.keys(overrides).length > 0) {
             mermaidBlocks[i]._mbDirectives = overrides;
@@ -1251,12 +1251,31 @@ class MermaidBoostPlugin extends Plugin {
    */
   openFullscreenLightbox(sourceSvg, diagramMeta) {
     const block = sourceSvg && sourceSvg.closest && sourceSvg.closest(".mermaid-boost-card");
+    const hasLocalThemeOverride = Boolean(
+      block &&
+        ((block._mbDirectives && block._mbDirectives.theme) ||
+          (block.dataset && (block.dataset.mbTheme || block.dataset.mbDirective)))
+    );
     const effectiveSettings = (block && block._mbEffectiveSettings) || this.settings;
     let closeFn = null;
     closeFn = openFullscreenLightbox(sourceSvg, diagramMeta, {
       settings: effectiveSettings,
-      saveSettings: () => this.saveSettings(),
-      cycleTheme: () => this.cycleTheme(),
+      saveSettings: () => (hasLocalThemeOverride ? Promise.resolve() : this.saveSettings()),
+      cycleTheme: hasLocalThemeOverride
+        ? async () => {
+            const nextKey = nextThemeKey(effectiveSettings.theme);
+            effectiveSettings.theme = nextKey;
+            const themeDef = THEMES[nextKey];
+            if (themeDef && Number.isFinite(themeDef.defaultRadius)) {
+              effectiveSettings.nodeRadius = themeDef.defaultRadius;
+            }
+            if (block) {
+              block._mbEffectiveSettings = effectiveSettings;
+            }
+            new Notice(`Mermaid Boost theme: ${themeDef ? themeDef.name : nextKey}`);
+            return nextKey;
+          }
+        : () => this.cycleTheme(),
       exportSvgAsPng: (svg) => this.exportSvgAsPng(svg, effectiveSettings),
       onClose: () => {
         if (closeFn && this._openLightboxes) {

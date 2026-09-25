@@ -217,6 +217,53 @@ function extractDirectivesFromText(text) {
 }
 
 /**
+ * Extracts raw Mermaid code blocks from markdown section text following Markdown fence rules.
+ * Matches opening fence by character (` or ~) and minimum length (>=3), and matches closing fence
+ * by the same character, at least as many characters, with only trailing whitespace allowed.
+ * @param {string} sectionText - Markdown source text.
+ * @returns {string[]} Array of inner code block strings.
+ */
+function extractMermaidCodeBlocks(sectionText) {
+  if (typeof sectionText !== "string" || !sectionText.includes("mermaid")) {
+    return [];
+  }
+  const lines = sectionText.split(/\r?\n/);
+  const blocks = [];
+  let inBlock = false;
+  let fenceChar = "";
+  let fenceLength = 0;
+  let blockLines = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!inBlock) {
+      const openMatch = line.match(/^[ \t]*(`{3,}|~{3,})[ \t]*mermaid\b/i);
+      if (openMatch) {
+        inBlock = true;
+        fenceChar = openMatch[1][0];
+        fenceLength = openMatch[1].length;
+        blockLines = [];
+      }
+    } else {
+      const trimmed = line.trim();
+      if (
+        trimmed.length >= fenceLength &&
+        trimmed.startsWith(fenceChar.repeat(fenceLength)) &&
+        !trimmed.split("").some((ch) => ch !== fenceChar)
+      ) {
+        inBlock = false;
+        blocks.push(blockLines.join("\n"));
+        blockLines = [];
+      } else {
+        blockLines.push(line);
+      }
+    }
+  }
+
+  return blocks;
+}
+
+/**
  * Locates code block text in active CodeMirror 6 editor when in Live Preview.
  * @param {HTMLElement} block
  * @param {Object} app - Obsidian app instance
@@ -455,6 +502,7 @@ module.exports = {
   parseRadius,
   parseDirectiveString,
   extractDirectivesFromText,
+  extractMermaidCodeBlocks,
   findDiagramTextFromEditor,
   extractDirectiveFromElement,
   resolveEffectiveSettings,
