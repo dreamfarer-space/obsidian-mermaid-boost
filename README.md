@@ -175,10 +175,14 @@ Mermaid Boost ships zero-build ES/CommonJS runtime JavaScript directly so you ca
 # Run the Node.js unit test suite (requires Node.js 22+)
 npm test
 
+# Validate plugin manifest, versions.json, and documentation version consistency
+npm run validate
+
 # Run syntax validation
 node --check main.js
 node --check lib.js
 node --check lib.test.js
+node --check scripts/validate-plugin.js
 ```
 
 ### Repository Structure
@@ -188,9 +192,16 @@ node --check lib.test.js
 | `main.js` | Obsidian plugin lifecycle, DOM observer, toolbar controls, lightbox, HD PNG export & settings tab |
 | `lib.js` | Pure sizing engine (`SIZE_PRESETS`), 29 theme palettes (`THEMES`), and SVG beautification pipeline |
 | `lib.test.js` | Automated Node test suite verifying sizing math, theme integrity, and SVG post-processing |
+| `scripts/validate-plugin.js` | Metadata schema, release tag, and documentation version consistency validator |
 | `styles.css` | Card containers, toolbar buttons, fullscreen lightbox modal, and theme CSS rules |
-| `manifest.json` | Obsidian plugin manifest metadata (`1.0.1`, `minAppVersion: 1.5.0`) |
+| `manifest.json` | Obsidian plugin manifest metadata (`1.0.2`, `minAppVersion: 1.5.0`) |
 | `assets/` | SVG visual banners and theme showcase graphics used in documentation |
+
+### Release Process
+
+1. Update version metadata in `manifest.json`, `package.json`, `versions.json`, `CHANGELOG.md`, `README.md`, and `README.zh-CN.md`.
+2. Run `npm test` and `npm run validate` locally to verify schema and version synchronization.
+3. Push a matching semantic version tag (`git tag 1.0.2 && git push origin 1.0.2`) or trigger the **Release** workflow manually via `workflow_dispatch`. GitHub Actions automatically runs the test suite, validates release metadata against the tag, builds `mermaid-boost-<version>.zip`, and publishes `main.js`, `manifest.json`, `styles.css`, and the ZIP bundle to GitHub Releases.
 
 ---
 

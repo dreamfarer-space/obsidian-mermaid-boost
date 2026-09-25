@@ -175,10 +175,14 @@ flowchart LR
 # 运行 Node 单元测试套件（需 Node.js 22+）
 npm test
 
+# 校验插件清单 Schema、versions.json 与文档版本号一致性
+npm run validate
+
 # 运行 JavaScript 语法检查
 node --check main.js
 node --check lib.js
 node --check lib.test.js
+node --check scripts/validate-plugin.js
 ```
 
 ### 仓库目录结构
@@ -188,9 +192,16 @@ node --check lib.test.js
 | `main.js` | Obsidian 插件生命周期、DOM 监听、工具栏控件、全屏 Lightbox、高清 PNG 导出与设置页 |
 | `lib.js` | 核心尺寸计算引擎（`SIZE_PRESETS`）、29 款主题色板（`THEMES`）与 SVG 美化纯函数 |
 | `lib.test.js` | 基于 Node 的自动化测试套件，覆盖尺寸计算、主题完整性与 SVG 转换 |
+| `scripts/validate-plugin.js` | 插件元数据 Schema、发布标签与文档版本号一致性校验脚本 |
 | `styles.css` | 图表卡片、工具栏按钮、全屏 Lightbox 弹窗与主题相关样式 |
-| `manifest.json` | Obsidian 插件清单元数据（`1.0.1`，`minAppVersion: 1.5.0`） |
+| `manifest.json` | Obsidian 插件清单元数据（`1.0.2`，`minAppVersion: 1.5.0`） |
 | `assets/` | 文档顶部 Hero 横幅与 29 款主题全景预览 SVG 资源 |
+
+### 发布流程
+
+1. 同步更新 `manifest.json`、`package.json`、`versions.json`、`CHANGELOG.md`、`README.md` 与 `README.zh-CN.md` 中的版本信息。
+2. 本地运行 `npm test` 与 `npm run validate`，确保测试通过且元数据与文档无版本漂移。
+3. 推送与 `manifest.json` 完全一致的 `x.y.z` 标签（如 `git tag 1.0.2 && git push origin 1.0.2`）或通过 `workflow_dispatch` 手动触发 **Release** 工作流，GitHub Actions 将自动执行测试、校验标签与元数据、打包 `mermaid-boost-<version>.zip` 并发布包含 `main.js`、`manifest.json`、`styles.css` 及 ZIP 压缩包的 GitHub Release。
 
 ---
 
