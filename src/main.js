@@ -853,18 +853,24 @@ class MermaidBoostPlugin extends Plugin {
       block.parentElement !== document.documentElement
         ? block.parentElement.clientWidth
         : 0;
+    const liveAvailableWidth =
+      hostWidth > 0 && parentWidth > 0
+        ? Math.min(hostWidth, parentWidth)
+        : hostWidth || parentWidth;
     const observedWidth =
       block._mbObservedContainerWidth > 0
-        ? parentWidth > 0
+        ? liveAvailableWidth > 0 &&
+          block._mbObservedContainerWidth < liveAvailableWidth &&
+          block.clientWidth >= liveAvailableWidth
+          ? liveAvailableWidth
+          : parentWidth > 0
           ? Math.min(block._mbObservedContainerWidth, parentWidth)
           : block._mbObservedContainerWidth
         : null;
     const containerWidth =
       explicitContainerWidth ||
       observedWidth ||
-      (hostWidth > 0 && parentWidth > 0
-        ? Math.min(hostWidth, parentWidth)
-        : hostWidth || parentWidth) ||
+      liveAvailableWidth ||
       block.clientWidth ||
       640;
 
@@ -1065,6 +1071,7 @@ class MermaidBoostPlugin extends Plugin {
     const lastContainerW = block._mbLastContainerWidth;
 
     let hasMeaningfulResize = false;
+    let callbackObservedW = null;
     if (entries && Array.isArray(entries)) {
       for (const entry of entries) {
         if (
@@ -1110,9 +1117,9 @@ class MermaidBoostPlugin extends Plugin {
             liveContainerW > 0 && Math.abs(liveContainerW - lastContainerW) > 2
               ? Math.min(liveContainerW, entryW)
               : entryW;
-          block._mbObservedContainerWidth =
-            block._mbObservedContainerWidth > 0
-              ? Math.min(block._mbObservedContainerWidth, calculatedObservedW)
+          callbackObservedW =
+            callbackObservedW !== null
+              ? Math.min(callbackObservedW, calculatedObservedW)
               : calculatedObservedW;
           hasMeaningfulResize = true;
         } else {
@@ -1131,15 +1138,22 @@ class MermaidBoostPlugin extends Plugin {
               ? Math.min(parentW, entryW)
               : entryW;
           if (lastContainerW && Math.abs(effectiveW - lastContainerW) <= 2) {
+            if (block._mbObservedContainerWidth !== undefined) {
+              delete block._mbObservedContainerWidth;
+            }
             continue;
           }
-          block._mbObservedContainerWidth =
-            block._mbObservedContainerWidth > 0
-              ? Math.min(block._mbObservedContainerWidth, effectiveW)
+          callbackObservedW =
+            callbackObservedW !== null
+              ? Math.min(callbackObservedW, effectiveW)
               : effectiveW;
           hasMeaningfulResize = true;
         }
       }
+    }
+
+    if (callbackObservedW !== null) {
+      block._mbObservedContainerWidth = callbackObservedW;
     }
 
     if (!hasMeaningfulResize) return;
