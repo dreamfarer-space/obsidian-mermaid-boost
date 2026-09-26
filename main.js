@@ -2493,6 +2493,7 @@ var MermaidBoostPlugin = class extends Plugin {
       delete block._mbLastRenderedContentWidth;
       delete block._mbLastContainerWidth;
       delete block._mbObservedContainerWidth;
+      delete block._mbObservedLiveContainerWidth;
       if (block.classList) {
         block.classList.remove(
           "mb-no-frame",
@@ -2980,7 +2981,7 @@ var MermaidBoostPlugin = class extends Plugin {
     const hostWidth = hostContainer && typeof document !== "undefined" && hostContainer !== document.body && hostContainer !== document.documentElement ? hostContainer.clientWidth : 0;
     const parentWidth = block.parentElement && typeof document !== "undefined" && block.parentElement !== document.body && block.parentElement !== document.documentElement ? block.parentElement.clientWidth : 0;
     const liveAvailableWidth = hostWidth > 0 && parentWidth > 0 ? Math.min(hostWidth, parentWidth) : hostWidth || parentWidth;
-    const observedWidth = block._mbObservedContainerWidth > 0 ? liveAvailableWidth > 0 && block._mbObservedContainerWidth < liveAvailableWidth && block.clientWidth >= liveAvailableWidth ? liveAvailableWidth : parentWidth > 0 ? Math.min(block._mbObservedContainerWidth, parentWidth) : block._mbObservedContainerWidth : null;
+    const observedWidth = block._mbObservedContainerWidth > 0 ? liveAvailableWidth > 0 && block._mbObservedContainerWidth < liveAvailableWidth && liveAvailableWidth > (block._mbObservedLiveContainerWidth || 0) ? liveAvailableWidth : parentWidth > 0 ? Math.min(block._mbObservedContainerWidth, parentWidth) : block._mbObservedContainerWidth : null;
     const containerWidth = explicitContainerWidth || observedWidth || liveAvailableWidth || block.clientWidth || 640;
     const sizing = computeSmartDiagramSize(
       effectiveNat,
@@ -3096,6 +3097,7 @@ var MermaidBoostPlugin = class extends Plugin {
       this._pendingResizeBlocks.delete(block);
     }
     delete block._mbObservedContainerWidth;
+    delete block._mbObservedLiveContainerWidth;
     delete block._mbLastRenderedWidth;
     delete block._mbLastRenderedHeight;
     delete block._mbLastRenderedContentWidth;
@@ -3135,6 +3137,12 @@ var MermaidBoostPlugin = class extends Plugin {
             continue;
           }
           if (lastContainerW && Math.abs(entryW - lastContainerW) <= 2) {
+            if (block._mbObservedContainerWidth !== void 0) {
+              delete block._mbObservedContainerWidth;
+            }
+            if (block._mbObservedLiveContainerWidth !== void 0) {
+              delete block._mbObservedLiveContainerWidth;
+            }
             continue;
           }
           const calculatedObservedW = liveContainerW > 0 && Math.abs(liveContainerW - lastContainerW) > 2 ? Math.min(liveContainerW, entryW) : entryW;
@@ -3147,6 +3155,9 @@ var MermaidBoostPlugin = class extends Plugin {
             if (block._mbObservedContainerWidth !== void 0) {
               delete block._mbObservedContainerWidth;
             }
+            if (block._mbObservedLiveContainerWidth !== void 0) {
+              delete block._mbObservedLiveContainerWidth;
+            }
             continue;
           }
           callbackObservedW = callbackObservedW !== null ? Math.min(callbackObservedW, effectiveW) : effectiveW;
@@ -3156,6 +3167,7 @@ var MermaidBoostPlugin = class extends Plugin {
     }
     if (callbackObservedW !== null) {
       block._mbObservedContainerWidth = callbackObservedW;
+      block._mbObservedLiveContainerWidth = liveContainerW;
     }
     if (!hasMeaningfulResize) return;
     if (!this._pendingResizeBlocks) {
@@ -3195,6 +3207,7 @@ var MermaidBoostPlugin = class extends Plugin {
       }
       if (b) {
         delete b._mbObservedContainerWidth;
+        delete b._mbObservedLiveContainerWidth;
       }
     }
   }

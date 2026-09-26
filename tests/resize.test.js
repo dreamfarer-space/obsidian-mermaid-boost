@@ -931,7 +931,7 @@ test("Container width resolution: rapid contraction then expansion before flush 
 
     // 2. Expand to 800px before flushResizeBatch elapses
     host.clientWidth = 800;
-    block.clientWidth = 800;
+    // Note: block.clientWidth remains 300px because card is styled with width: fit-content
     observer.trigger([{ target: host, contentRect: { width: 800 } }]);
 
     // Flush batch debounced resize
@@ -946,6 +946,11 @@ test("Container width resolution: rapid contraction then expansion before flush 
       block._mbObservedContainerWidth,
       undefined,
       "Observed container width must be cleared after flush"
+    );
+    assert.equal(
+      block._mbObservedLiveContainerWidth,
+      undefined,
+      "Observed live container width must be cleared after flush"
     );
   } finally {
     restoreObsidian();
@@ -1000,6 +1005,67 @@ test("Container width resolution: contraction then return to original width befo
       block._mbObservedContainerWidth,
       undefined,
       "Observed container width must be cleared"
+    );
+    assert.equal(
+      block._mbObservedLiveContainerWidth,
+      undefined,
+      "Observed live container width must be cleared"
+    );
+  } finally {
+    restoreObsidian();
+    delete global.ResizeObserver;
+    delete global.document;
+  }
+});
+
+test("Container width resolution: host DOM expands before flush without second ResizeObserver event adopts live expanded width", async () => {
+  const restoreObsidian = setupObsidianMock();
+  MockResizeObserver.instances = [];
+  global.ResizeObserver = MockResizeObserver;
+
+  try {
+    const { block, svg, host } = createMockMermaidBlock({
+      naturalWidth: 1000,
+      naturalHeight: 500,
+      containerWidth: 500,
+    });
+    setupMockDocument([block]);
+
+    const MermaidBoostPlugin = require("../src/main.js");
+    const plugin = new MermaidBoostPlugin({}, {});
+    await plugin.loadSettings();
+
+    plugin.decorateMermaidBlock(block);
+    const initialWidth = parseInt(svg.style.width, 10);
+
+    const observer = MockResizeObserver.instances[0];
+    assert.ok(observer);
+
+    // 1. Contraction event arrives: 300px
+    host.clientWidth = 300;
+    block.clientWidth = 300;
+    observer.trigger([{ target: host, contentRect: { width: 300 } }]);
+
+    // 2. Host container in DOM expands to 800px, but no second ResizeObserver callback is dispatched before flush
+    host.clientWidth = 800;
+
+    // 3. Debounced batch flushes
+    plugin.flushResizeBatch();
+
+    const finalWidth = parseInt(svg.style.width, 10);
+    assert.ok(
+      finalWidth > initialWidth,
+      `Diagram must adopt expanded live container width (expected > ${initialWidth}, got ${finalWidth})`
+    );
+    assert.equal(
+      block._mbObservedContainerWidth,
+      undefined,
+      "Observed container width must be cleared after flush"
+    );
+    assert.equal(
+      block._mbObservedLiveContainerWidth,
+      undefined,
+      "Observed live container width must be cleared after flush"
     );
   } finally {
     restoreObsidian();

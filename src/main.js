@@ -232,6 +232,7 @@ class MermaidBoostPlugin extends Plugin {
       delete block._mbLastRenderedContentWidth;
       delete block._mbLastContainerWidth;
       delete block._mbObservedContainerWidth;
+      delete block._mbObservedLiveContainerWidth;
       if (block.classList) {
         block.classList.remove(
           "mb-no-frame",
@@ -861,7 +862,7 @@ class MermaidBoostPlugin extends Plugin {
       block._mbObservedContainerWidth > 0
         ? liveAvailableWidth > 0 &&
           block._mbObservedContainerWidth < liveAvailableWidth &&
-          block.clientWidth >= liveAvailableWidth
+          liveAvailableWidth > (block._mbObservedLiveContainerWidth || 0)
           ? liveAvailableWidth
           : parentWidth > 0
           ? Math.min(block._mbObservedContainerWidth, parentWidth)
@@ -1029,6 +1030,7 @@ class MermaidBoostPlugin extends Plugin {
       this._pendingResizeBlocks.delete(block);
     }
     delete block._mbObservedContainerWidth;
+    delete block._mbObservedLiveContainerWidth;
     delete block._mbLastRenderedWidth;
     delete block._mbLastRenderedHeight;
     delete block._mbLastRenderedContentWidth;
@@ -1110,6 +1112,12 @@ class MermaidBoostPlugin extends Plugin {
 
           // 3. If container width has not changed compared to lastContainerW, ignore.
           if (lastContainerW && Math.abs(entryW - lastContainerW) <= 2) {
+            if (block._mbObservedContainerWidth !== undefined) {
+              delete block._mbObservedContainerWidth;
+            }
+            if (block._mbObservedLiveContainerWidth !== undefined) {
+              delete block._mbObservedLiveContainerWidth;
+            }
             continue;
           }
 
@@ -1141,6 +1149,9 @@ class MermaidBoostPlugin extends Plugin {
             if (block._mbObservedContainerWidth !== undefined) {
               delete block._mbObservedContainerWidth;
             }
+            if (block._mbObservedLiveContainerWidth !== undefined) {
+              delete block._mbObservedLiveContainerWidth;
+            }
             continue;
           }
           callbackObservedW =
@@ -1154,6 +1165,7 @@ class MermaidBoostPlugin extends Plugin {
 
     if (callbackObservedW !== null) {
       block._mbObservedContainerWidth = callbackObservedW;
+      block._mbObservedLiveContainerWidth = liveContainerW;
     }
 
     if (!hasMeaningfulResize) return;
@@ -1196,6 +1208,7 @@ class MermaidBoostPlugin extends Plugin {
       }
       if (b) {
         delete b._mbObservedContainerWidth;
+        delete b._mbObservedLiveContainerWidth;
       }
     }
   }
