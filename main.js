@@ -2492,6 +2492,7 @@ var MermaidBoostPlugin = class extends Plugin {
       delete block._mbLastRenderedHeight;
       delete block._mbLastRenderedContentWidth;
       delete block._mbLastContainerWidth;
+      delete block._mbObservedContainerWidth;
       if (block.classList) {
         block.classList.remove(
           "mb-no-frame",
@@ -2976,9 +2977,10 @@ var MermaidBoostPlugin = class extends Plugin {
       minReadableScale: block.dataset && block.dataset.mbPresetOverride ? cardPreset.minReadableScale : effectiveSettings.minReadableScale
     });
     const hostContainer = typeof block.closest === "function" && block.closest(".markdown-preview-sizer, .cm-content, .callout-content") || block.parentElement;
-    const hostWidth = hostContainer && hostContainer.clientWidth;
-    const parentWidth = block.parentElement && typeof document !== "undefined" && block.parentElement !== document.body ? block.parentElement.clientWidth : 0;
-    const containerWidth = explicitContainerWidth || block._mbObservedContainerWidth || (hostWidth > 0 && parentWidth > 0 ? Math.min(hostWidth, parentWidth) : hostWidth || parentWidth) || block.clientWidth || 640;
+    const hostWidth = hostContainer && typeof document !== "undefined" && hostContainer !== document.body && hostContainer !== document.documentElement ? hostContainer.clientWidth : 0;
+    const parentWidth = block.parentElement && typeof document !== "undefined" && block.parentElement !== document.body && block.parentElement !== document.documentElement ? block.parentElement.clientWidth : 0;
+    const observedWidth = block._mbObservedContainerWidth > 0 ? parentWidth > 0 ? Math.min(block._mbObservedContainerWidth, parentWidth) : block._mbObservedContainerWidth : null;
+    const containerWidth = explicitContainerWidth || observedWidth || (hostWidth > 0 && parentWidth > 0 ? Math.min(hostWidth, parentWidth) : hostWidth || parentWidth) || block.clientWidth || 640;
     const sizing = computeSmartDiagramSize(
       effectiveNat,
       diagramMeta,
@@ -3109,7 +3111,7 @@ var MermaidBoostPlugin = class extends Plugin {
       return;
     }
     const hostContainer = typeof block.closest === "function" && block.closest(".markdown-preview-sizer, .cm-content, .callout-content") || block.parentElement;
-    const liveContainerW = hostContainer && Number.isFinite(hostContainer.clientWidth) && hostContainer.clientWidth > 0 && hostContainer.clientWidth || block.parentElement && typeof document !== "undefined" && block.parentElement !== document.body && Number.isFinite(block.parentElement.clientWidth) && block.parentElement.clientWidth > 0 && block.parentElement.clientWidth || 0;
+    const liveContainerW = hostContainer && typeof document !== "undefined" && hostContainer !== document.body && hostContainer !== document.documentElement && Number.isFinite(hostContainer.clientWidth) && hostContainer.clientWidth > 0 && hostContainer.clientWidth || block.parentElement && typeof document !== "undefined" && block.parentElement !== document.body && block.parentElement !== document.documentElement && Number.isFinite(block.parentElement.clientWidth) && block.parentElement.clientWidth > 0 && block.parentElement.clientWidth || 0;
     const lastContainerW = block._mbLastContainerWidth;
     let hasMeaningfulResize = false;
     if (entries && Array.isArray(entries)) {
@@ -3139,13 +3141,16 @@ var MermaidBoostPlugin = class extends Plugin {
           if (lastContainerW && Math.abs(entryW - lastContainerW) <= 2) {
             continue;
           }
-          block._mbObservedContainerWidth = liveContainerW > 0 && Math.abs(liveContainerW - lastContainerW) > 2 ? Math.min(liveContainerW, entryW) : entryW;
+          const calculatedObservedW = liveContainerW > 0 && Math.abs(liveContainerW - lastContainerW) > 2 ? Math.min(liveContainerW, entryW) : entryW;
+          block._mbObservedContainerWidth = block._mbObservedContainerWidth > 0 ? Math.min(block._mbObservedContainerWidth, calculatedObservedW) : calculatedObservedW;
           hasMeaningfulResize = true;
         } else {
-          if (lastContainerW && Math.abs(entryW - lastContainerW) <= 2) {
+          const parentW = block.parentElement && typeof document !== "undefined" && block.parentElement !== document.body && block.parentElement !== document.documentElement && Number.isFinite(block.parentElement.clientWidth) && block.parentElement.clientWidth > 0 ? block.parentElement.clientWidth : 0;
+          const effectiveW = parentW > 0 && entry.target !== block.parentElement ? Math.min(parentW, entryW) : entryW;
+          if (lastContainerW && Math.abs(effectiveW - lastContainerW) <= 2) {
             continue;
           }
-          block._mbObservedContainerWidth = entryW;
+          block._mbObservedContainerWidth = block._mbObservedContainerWidth > 0 ? Math.min(block._mbObservedContainerWidth, effectiveW) : effectiveW;
           hasMeaningfulResize = true;
         }
       }

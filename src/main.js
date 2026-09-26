@@ -231,6 +231,7 @@ class MermaidBoostPlugin extends Plugin {
       delete block._mbLastRenderedHeight;
       delete block._mbLastRenderedContentWidth;
       delete block._mbLastContainerWidth;
+      delete block._mbObservedContainerWidth;
       if (block.classList) {
         block.classList.remove(
           "mb-no-frame",
@@ -838,16 +839,29 @@ class MermaidBoostPlugin extends Plugin {
       (typeof block.closest === "function" &&
         block.closest(".markdown-preview-sizer, .cm-content, .callout-content")) ||
       block.parentElement;
-    const hostWidth = hostContainer && hostContainer.clientWidth;
+    const hostWidth =
+      hostContainer &&
+      typeof document !== "undefined" &&
+      hostContainer !== document.body &&
+      hostContainer !== document.documentElement
+        ? hostContainer.clientWidth
+        : 0;
     const parentWidth =
       block.parentElement &&
       typeof document !== "undefined" &&
-      block.parentElement !== document.body
+      block.parentElement !== document.body &&
+      block.parentElement !== document.documentElement
         ? block.parentElement.clientWidth
         : 0;
+    const observedWidth =
+      block._mbObservedContainerWidth > 0
+        ? parentWidth > 0
+          ? Math.min(block._mbObservedContainerWidth, parentWidth)
+          : block._mbObservedContainerWidth
+        : null;
     const containerWidth =
       explicitContainerWidth ||
-      block._mbObservedContainerWidth ||
+      observedWidth ||
       (hostWidth > 0 && parentWidth > 0
         ? Math.min(hostWidth, parentWidth)
         : hostWidth || parentWidth) ||
@@ -1033,12 +1047,16 @@ class MermaidBoostPlugin extends Plugin {
 
     const liveContainerW =
       (hostContainer &&
+        typeof document !== "undefined" &&
+        hostContainer !== document.body &&
+        hostContainer !== document.documentElement &&
         Number.isFinite(hostContainer.clientWidth) &&
         hostContainer.clientWidth > 0 &&
         hostContainer.clientWidth) ||
       (block.parentElement &&
         typeof document !== "undefined" &&
         block.parentElement !== document.body &&
+        block.parentElement !== document.documentElement &&
         Number.isFinite(block.parentElement.clientWidth) &&
         block.parentElement.clientWidth > 0 &&
         block.parentElement.clientWidth) ||
@@ -1101,17 +1119,37 @@ class MermaidBoostPlugin extends Plugin {
             continue;
           }
 
-          block._mbObservedContainerWidth =
+          const calculatedObservedW =
             liveContainerW > 0 && Math.abs(liveContainerW - lastContainerW) > 2
               ? Math.min(liveContainerW, entryW)
               : entryW;
+          block._mbObservedContainerWidth =
+            block._mbObservedContainerWidth > 0
+              ? Math.min(block._mbObservedContainerWidth, calculatedObservedW)
+              : calculatedObservedW;
           hasMeaningfulResize = true;
         } else {
           // For container/parent elements: ignore if container width hasn't meaningfully changed
-          if (lastContainerW && Math.abs(entryW - lastContainerW) <= 2) {
+          const parentW =
+            block.parentElement &&
+            typeof document !== "undefined" &&
+            block.parentElement !== document.body &&
+            block.parentElement !== document.documentElement &&
+            Number.isFinite(block.parentElement.clientWidth) &&
+            block.parentElement.clientWidth > 0
+              ? block.parentElement.clientWidth
+              : 0;
+          const effectiveW =
+            parentW > 0 && entry.target !== block.parentElement
+              ? Math.min(parentW, entryW)
+              : entryW;
+          if (lastContainerW && Math.abs(effectiveW - lastContainerW) <= 2) {
             continue;
           }
-          block._mbObservedContainerWidth = entryW;
+          block._mbObservedContainerWidth =
+            block._mbObservedContainerWidth > 0
+              ? Math.min(block._mbObservedContainerWidth, effectiveW)
+              : effectiveW;
           hasMeaningfulResize = true;
         }
       }

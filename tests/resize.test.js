@@ -801,7 +801,8 @@ test("Container width resolution: window resize expand clears stale observed wid
     // Later window/workspace expands to 1200px
     host.clientWidth = 1200;
     block.clientWidth = 1200;
-    plugin.updateDiagramSizing(block);
+    observer.trigger([{ target: host, contentRect: { width: 1200 } }]);
+    plugin.flushResizeBatch();
 
     const expandedWidth = parseInt(svg.style.width, 10);
     assert.ok(
@@ -814,4 +815,82 @@ test("Container width resolution: window resize expand clears stale observed wid
     delete global.document;
   }
 });
+
+test("Container width resolution: parent and host entries with different widths in one callback adopt the narrower container width", async () => {
+  const restoreObsidian = setupObsidianMock();
+  MockResizeObserver.instances = [];
+  global.ResizeObserver = MockResizeObserver;
+
+  try {
+    const { block, svg, host } = createMockMermaidBlock({
+      naturalWidth: 1000,
+      naturalHeight: 500,
+      containerWidth: 800,
+    });
+
+    const parent = {
+      clientWidth: 400,
+      parentElement: host,
+    };
+    block.parentElement = parent;
+    block.clientWidth = 400;
+
+    setupMockDocument([block]);
+
+    const MermaidBoostPlugin = require("../src/main.js");
+    const plugin = new MermaidBoostPlugin({}, {});
+    await plugin.loadSettings();
+
+    plugin.decorateMermaidBlock(block);
+
+    const observer = MockResizeObserver.instances[0];
+    assert.ok(observer);
+
+    // Verify both orderings in a single callback:
+    // Case 1: host (wider, 1000px) processed AFTER parent (narrower, 400px)
+    host.clientWidth = 1000;
+    parent.clientWidth = 400;
+    observer.trigger([
+      { target: parent, contentRect: { width: 400 } },
+      { target: host, contentRect: { width: 1000 } },
+    ]);
+    plugin.flushResizeBatch();
+
+    const renderedW1 = parseInt(svg.style.width, 10);
+    assert.ok(
+      renderedW1 <= 400,
+      `Diagram width (${renderedW1}px) must not exceed narrower parent width (400px) when wider host is last`
+    );
+    assert.equal(
+      block._mbObservedContainerWidth,
+      undefined,
+      "Observed container width must be cleared after flush"
+    );
+
+    // Case 2: parent (narrower, 350px) processed AFTER host (wider, 900px)
+    host.clientWidth = 900;
+    parent.clientWidth = 350;
+    observer.trigger([
+      { target: host, contentRect: { width: 900 } },
+      { target: parent, contentRect: { width: 350 } },
+    ]);
+    plugin.flushResizeBatch();
+
+    const renderedW2 = parseInt(svg.style.width, 10);
+    assert.ok(
+      renderedW2 <= 350,
+      `Diagram width (${renderedW2}px) must not exceed narrower parent width (350px) when narrower parent is last`
+    );
+    assert.equal(
+      block._mbObservedContainerWidth,
+      undefined,
+      "Observed container width must be cleared after flush"
+    );
+  } finally {
+    restoreObsidian();
+    delete global.ResizeObserver;
+    delete global.document;
+  }
+});
+
 
