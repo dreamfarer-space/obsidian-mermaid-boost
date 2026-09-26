@@ -227,6 +227,9 @@ class MermaidBoostPlugin extends Plugin {
       }
       delete block._mbDirectives;
       delete block._mbEffectiveSettings;
+      delete block._mbLastRenderedWidth;
+      delete block._mbLastRenderedHeight;
+      delete block._mbLastContainerWidth;
       if (block.classList) {
         block.classList.remove(
           "mb-no-frame",
@@ -837,11 +840,11 @@ class MermaidBoostPlugin extends Plugin {
     const containerWidth =
       explicitContainerWidth ||
       block._mbObservedContainerWidth ||
+      (hostContainer && hostContainer.clientWidth) ||
       (block.parentElement &&
         typeof document !== "undefined" &&
         block.parentElement !== document.body &&
         block.parentElement.clientWidth) ||
-      (hostContainer && hostContainer.clientWidth) ||
       block.clientWidth ||
       640;
 
@@ -884,6 +887,9 @@ class MermaidBoostPlugin extends Plugin {
       svg.style.setProperty("height", targetH, "important");
       svg.style.setProperty("max-width", "none", "important");
     }
+    block._mbLastRenderedWidth = finalWidth;
+    block._mbLastRenderedHeight = finalHeight;
+    block._mbLastContainerWidth = containerWidth;
     if (block.classList) {
       block.classList.toggle(
         "is-mb-user-zoomed",
@@ -971,6 +977,9 @@ class MermaidBoostPlugin extends Plugin {
       this._pendingResizeBlocks.delete(block);
     }
     delete block._mbObservedContainerWidth;
+    delete block._mbLastRenderedWidth;
+    delete block._mbLastRenderedHeight;
+    delete block._mbLastContainerWidth;
   }
 
   /**
@@ -983,6 +992,7 @@ class MermaidBoostPlugin extends Plugin {
       this.unobserveDiagram(block);
       return;
     }
+    let hasMeaningfulResize = false;
     if (entries && Array.isArray(entries)) {
       for (const entry of entries) {
         if (
@@ -991,10 +1001,28 @@ class MermaidBoostPlugin extends Plugin {
           Number.isFinite(entry.contentRect.width) &&
           entry.contentRect.width > 0
         ) {
+          // If this entry is for the diagram block itself, check if its width
+          // matches our own last rendered SVG width. If so, this event was triggered
+          // by our own SVG layout update (not an external resize) and must be ignored
+          // to prevent an infinite resizing loop.
+          if (entry.target === block) {
+            const renderedW = block._mbLastRenderedWidth;
+            if (renderedW && Math.abs(entry.contentRect.width - renderedW) <= 2) {
+              continue;
+            }
+          } else {
+            // For parent/container elements, ignore if width hasn't changed
+            const lastContainerW = block._mbLastContainerWidth;
+            if (lastContainerW && Math.abs(entry.contentRect.width - lastContainerW) <= 2) {
+              continue;
+            }
+          }
           block._mbObservedContainerWidth = entry.contentRect.width;
+          hasMeaningfulResize = true;
         }
       }
     }
+    if (!hasMeaningfulResize) return;
     if (!this._pendingResizeBlocks) {
       this._pendingResizeBlocks = new Set();
     }
@@ -1031,9 +1059,6 @@ class MermaidBoostPlugin extends Plugin {
         this.updateDiagramSizing(b);
       } else if (b) {
         this.unobserveDiagram(b);
-      }
-      if (b) {
-        delete b._mbObservedContainerWidth;
       }
     }
   }

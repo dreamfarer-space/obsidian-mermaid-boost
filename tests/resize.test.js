@@ -583,3 +583,58 @@ test("Restores observation and sizing without re-beautifying when an initialized
     delete global.document;
   }
 });
+
+test("Self-resize loop prevention: ResizeObserver entry matching rendered SVG width does not trigger infinite shrinking loop", async () => {
+  const restoreObsidian = setupObsidianMock();
+  MockResizeObserver.instances = [];
+  global.ResizeObserver = MockResizeObserver;
+
+  try {
+    const { block, svg, host } = createMockMermaidBlock({
+      naturalWidth: 640,
+      naturalHeight: 320,
+      containerWidth: 800,
+    });
+    setupMockDocument([block]);
+
+    const MermaidBoostPlugin = require("../src/main.js");
+    const plugin = new MermaidBoostPlugin({}, {});
+    await plugin.loadSettings();
+
+    plugin.decorateMermaidBlock(block);
+    const initialWidth = parseInt(svg.style.width, 10);
+    assert.ok(initialWidth > 0, "Initial width should be computed");
+
+    const observer = MockResizeObserver.instances[0];
+    assert.ok(observer);
+
+    // Simulate real browser layout: ResizeObserver fires for block with contentRect matching rendered SVG width
+    observer.trigger([{ target: block, contentRect: { width: initialWidth } }]);
+
+    // Batch flush should not have scheduled or changed diagram width
+    plugin.flushResizeBatch();
+    const afterSelfNotificationWidth = parseInt(svg.style.width, 10);
+    assert.equal(
+      afterSelfNotificationWidth,
+      initialWidth,
+      "Diagram width must not shrink when ResizeObserver reports the block's own rendered width"
+    );
+
+    // Repeated self-resize callbacks (simulating browser layout events) remain strictly stable
+    for (let i = 0; i < 5; i++) {
+      observer.trigger([{ target: block, contentRect: { width: afterSelfNotificationWidth } }]);
+      plugin.flushResizeBatch();
+    }
+    const finalStableWidth = parseInt(svg.style.width, 10);
+    assert.equal(
+      finalStableWidth,
+      initialWidth,
+      "Diagram width must remain strictly identical across multiple self-resize callbacks without shrinking"
+    );
+  } finally {
+    restoreObsidian();
+    delete global.ResizeObserver;
+    delete global.document;
+  }
+});
+

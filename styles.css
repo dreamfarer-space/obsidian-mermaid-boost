@@ -209,8 +209,6 @@ body.mermaid-boost-enabled .mermaid.mermaid-boost-card > svg {
   height: auto;
   cursor: zoom-in;
   font-family: var(--mb-font-family, Inter, -apple-system, BlinkMacSystemFont, sans-serif);
-  transition: width 0.18s cubic-bezier(0.22, 1, 0.36, 1),
-              height 0.18s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 body.mermaid-boost-enabled .markdown-rendered .mermaid.mermaid-boost-card svg text,
