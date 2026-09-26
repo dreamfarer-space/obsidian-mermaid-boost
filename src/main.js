@@ -778,6 +778,52 @@ class MermaidBoostPlugin extends Plugin {
   }
 
   /**
+   * Computes the live container widths (host, parent, and effective minimum) for a diagram block.
+   * @param {HTMLElement} block - The Mermaid diagram card element.
+   * @returns {{ hostWidth: number, parentWidth: number, effectiveWidth: number }} Container widths.
+   */
+  getContainerWidths(block) {
+    if (!block || typeof document === "undefined") {
+      return { hostWidth: 0, parentWidth: 0, effectiveWidth: 0 };
+    }
+    const hostContainer =
+      (typeof block.closest === "function" &&
+        block.closest(".markdown-preview-sizer, .cm-content, .callout-content")) ||
+      block.parentElement;
+    const hostWidth =
+      hostContainer &&
+      hostContainer !== document.body &&
+      hostContainer !== document.documentElement &&
+      Number.isFinite(hostContainer.clientWidth) &&
+      hostContainer.clientWidth > 0
+        ? hostContainer.clientWidth
+        : 0;
+    const parentWidth =
+      block.parentElement &&
+      block.parentElement !== document.body &&
+      block.parentElement !== document.documentElement &&
+      Number.isFinite(block.parentElement.clientWidth) &&
+      block.parentElement.clientWidth > 0
+        ? block.parentElement.clientWidth
+        : 0;
+    const effectiveWidth =
+      hostWidth > 0 && parentWidth > 0
+        ? Math.min(hostWidth, parentWidth)
+        : hostWidth || parentWidth;
+    return { hostWidth, parentWidth, effectiveWidth };
+  }
+
+  /**
+   * Computes the live effective container width for a diagram block,
+   * taking the narrower dimension between the closest host container and direct parent.
+   * @param {HTMLElement} block - The Mermaid diagram card element.
+   * @returns {number} The effective available width, or 0 if neither is measurable.
+   */
+  getLiveAvailableWidth(block) {
+    return this.getContainerWidths(block).effectiveWidth;
+  }
+
+  /**
    * Recomputes and applies responsive diagram sizing without full DOM or theme rebuilds.
    * @param {HTMLElement} block - The Mermaid diagram card element.
    * @param {number|null} [explicitContainerWidth=null] - Optional explicitly measured container width.
@@ -836,36 +882,15 @@ class MermaidBoostPlugin extends Plugin {
           : effectiveSettings.minReadableScale,
     });
 
-    const hostContainer =
-      (typeof block.closest === "function" &&
-        block.closest(".markdown-preview-sizer, .cm-content, .callout-content")) ||
-      block.parentElement;
-    const hostWidth =
-      hostContainer &&
-      typeof document !== "undefined" &&
-      hostContainer !== document.body &&
-      hostContainer !== document.documentElement
-        ? hostContainer.clientWidth
-        : 0;
-    const parentWidth =
-      block.parentElement &&
-      typeof document !== "undefined" &&
-      block.parentElement !== document.body &&
-      block.parentElement !== document.documentElement
-        ? block.parentElement.clientWidth
-        : 0;
-    const liveAvailableWidth =
-      hostWidth > 0 && parentWidth > 0
-        ? Math.min(hostWidth, parentWidth)
-        : hostWidth || parentWidth;
+    const liveAvailableWidth = this.getLiveAvailableWidth(block);
     const observedWidth =
       block._mbObservedContainerWidth > 0
         ? liveAvailableWidth > 0 &&
           block._mbObservedContainerWidth < liveAvailableWidth &&
           liveAvailableWidth > (block._mbObservedLiveContainerWidth || 0)
           ? liveAvailableWidth
-          : parentWidth > 0
-          ? Math.min(block._mbObservedContainerWidth, parentWidth)
+          : liveAvailableWidth > 0
+          ? Math.min(block._mbObservedContainerWidth, liveAvailableWidth)
           : block._mbObservedContainerWidth
         : null;
     const containerWidth =
@@ -1048,27 +1073,8 @@ class MermaidBoostPlugin extends Plugin {
       return;
     }
 
-    const hostContainer =
-      (typeof block.closest === "function" &&
-        block.closest(".markdown-preview-sizer, .cm-content, .callout-content")) ||
-      block.parentElement;
-
-    const liveContainerW =
-      (hostContainer &&
-        typeof document !== "undefined" &&
-        hostContainer !== document.body &&
-        hostContainer !== document.documentElement &&
-        Number.isFinite(hostContainer.clientWidth) &&
-        hostContainer.clientWidth > 0 &&
-        hostContainer.clientWidth) ||
-      (block.parentElement &&
-        typeof document !== "undefined" &&
-        block.parentElement !== document.body &&
-        block.parentElement !== document.documentElement &&
-        Number.isFinite(block.parentElement.clientWidth) &&
-        block.parentElement.clientWidth > 0 &&
-        block.parentElement.clientWidth) ||
-      0;
+    const { hostWidth, parentWidth, effectiveWidth: liveContainerW } =
+      this.getContainerWidths(block);
 
     const lastContainerW = block._mbLastContainerWidth;
 
@@ -1132,19 +1138,9 @@ class MermaidBoostPlugin extends Plugin {
           hasMeaningfulResize = true;
         } else {
           // For container/parent elements: ignore if container width hasn't meaningfully changed
-          const parentW =
-            block.parentElement &&
-            typeof document !== "undefined" &&
-            block.parentElement !== document.body &&
-            block.parentElement !== document.documentElement &&
-            Number.isFinite(block.parentElement.clientWidth) &&
-            block.parentElement.clientWidth > 0
-              ? block.parentElement.clientWidth
-              : 0;
-          const effectiveW =
-            parentW > 0 && entry.target !== block.parentElement
-              ? Math.min(parentW, entryW)
-              : entryW;
+          const otherW =
+            entry.target === block.parentElement ? hostWidth : parentWidth;
+          const effectiveW = otherW > 0 ? Math.min(otherW, entryW) : entryW;
           if (lastContainerW && Math.abs(effectiveW - lastContainerW) <= 2) {
             if (block._mbObservedContainerWidth !== undefined) {
               delete block._mbObservedContainerWidth;

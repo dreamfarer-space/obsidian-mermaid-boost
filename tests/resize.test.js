@@ -1074,6 +1074,199 @@ test("Container width resolution: host DOM expands before flush without second R
   }
 });
 
+test("Container width resolution: nested parent container contracts then expands before flush adopts live expanded width", async () => {
+  const restoreObsidian = setupObsidianMock();
+  MockResizeObserver.instances = [];
+  global.ResizeObserver = MockResizeObserver;
+
+  try {
+    const { block, svg, host } = createMockMermaidBlock({
+      naturalWidth: 1000,
+      naturalHeight: 500,
+      containerWidth: 1000,
+    });
+    // Distinct parent column wrapper inside host
+    const parent = {
+      clientWidth: 600,
+      parentElement: host,
+    };
+    block.parentElement = parent;
+    block.clientWidth = 600;
+    setupMockDocument([block]);
+
+    const MermaidBoostPlugin = require("../src/main.js");
+    const plugin = new MermaidBoostPlugin({}, {});
+    await plugin.loadSettings();
+
+    plugin.decorateMermaidBlock(block);
+    const initialWidth = parseInt(svg.style.width, 10);
+
+    const observer = MockResizeObserver.instances[0];
+    assert.ok(observer);
+
+    // 1. Parent column wrapper contracts to 300px (host remains 1000px)
+    parent.clientWidth = 300;
+    block.clientWidth = 300;
+    observer.trigger([{ target: parent, contentRect: { width: 300 } }]);
+
+    // 2. Parent column expands to 800px before flushResizeBatch elapses
+    parent.clientWidth = 800;
+    observer.trigger([{ target: parent, contentRect: { width: 800 } }]);
+
+    // 3. Flush batch
+    plugin.flushResizeBatch();
+
+    const finalWidth = parseInt(svg.style.width, 10);
+    assert.ok(
+      finalWidth > initialWidth,
+      `Diagram must adopt expanded parent column width 800px (expected > ${initialWidth}, got ${finalWidth})`
+    );
+    assert.equal(
+      block._mbObservedContainerWidth,
+      undefined,
+      "Observed container width must be cleared after flush"
+    );
+    assert.equal(
+      block._mbObservedLiveContainerWidth,
+      undefined,
+      "Observed live container width must be cleared after flush"
+    );
+  } finally {
+    restoreObsidian();
+    delete global.ResizeObserver;
+    delete global.document;
+  }
+});
+
+test("Container width resolution: host DOM contracts before flush without second ResizeObserver event constrains diagram to narrower host", async () => {
+  const restoreObsidian = setupObsidianMock();
+  MockResizeObserver.instances = [];
+  global.ResizeObserver = MockResizeObserver;
+
+  try {
+    const { block, svg, host } = createMockMermaidBlock({
+      naturalWidth: 1000,
+      naturalHeight: 500,
+      containerWidth: 800,
+    });
+    const parent = {
+      clientWidth: 800,
+      parentElement: host,
+    };
+    block.parentElement = parent;
+    block.clientWidth = 800;
+    setupMockDocument([block]);
+
+    const MermaidBoostPlugin = require("../src/main.js");
+    const plugin = new MermaidBoostPlugin({}, {});
+    await plugin.loadSettings();
+
+    plugin.decorateMermaidBlock(block);
+
+    const observer = MockResizeObserver.instances[0];
+    assert.ok(observer);
+
+    // 1. Contraction event arrives for 600px
+    host.clientWidth = 600;
+    parent.clientWidth = 600;
+    observer.trigger([{ target: host, contentRect: { width: 600 } }]);
+
+    // 2. Host container in DOM contracts to 350px before flush, but no second event arrives; parent remains 800px
+    host.clientWidth = 350;
+    parent.clientWidth = 800;
+
+    // 3. Flush batch
+    plugin.flushResizeBatch();
+
+    const finalWidth = parseInt(svg.style.width, 10);
+    assert.ok(
+      finalWidth <= 350,
+      `Diagram width (${finalWidth}px) must not exceed narrower host container width (350px)`
+    );
+    assert.equal(
+      block._mbLastContainerWidth,
+      350,
+      "Last container width must be clamped to the narrower host container"
+    );
+    assert.equal(
+      block._mbObservedContainerWidth,
+      undefined,
+      "Observed container width must be cleared after flush"
+    );
+    assert.equal(
+      block._mbObservedLiveContainerWidth,
+      undefined,
+      "Observed live container width must be cleared after flush"
+    );
+  } finally {
+    restoreObsidian();
+    delete global.ResizeObserver;
+    delete global.document;
+  }
+});
+
+test("Container width resolution: parent container entry larger than host container is constrained to host width", async () => {
+  const restoreObsidian = setupObsidianMock();
+  MockResizeObserver.instances = [];
+  global.ResizeObserver = MockResizeObserver;
+
+  try {
+    const { block, svg, host } = createMockMermaidBlock({
+      naturalWidth: 1000,
+      naturalHeight: 500,
+      containerWidth: 350,
+    });
+    // Distinct parent wrapper inside host with wider clientWidth
+    const parent = {
+      clientWidth: 800,
+      parentElement: host,
+    };
+    block.parentElement = parent;
+    block.clientWidth = 350;
+    setupMockDocument([block]);
+
+    const MermaidBoostPlugin = require("../src/main.js");
+    const plugin = new MermaidBoostPlugin({}, {});
+    await plugin.loadSettings();
+
+    plugin.decorateMermaidBlock(block);
+
+    const observer = MockResizeObserver.instances[0];
+    assert.ok(observer);
+
+    // Parent wrapper fires an 800px resize entry, but host is 350px
+    observer.trigger([{ target: parent, contentRect: { width: 800 } }]);
+
+    // Flush batch
+    plugin.flushResizeBatch();
+
+    const finalWidth = parseInt(svg.style.width, 10);
+    assert.ok(
+      finalWidth <= 350,
+      `Diagram width (${finalWidth}px) must not exceed host container width (350px) when parent entry is larger`
+    );
+    assert.equal(
+      block._mbLastContainerWidth,
+      350,
+      "Last container width must not exceed host container width"
+    );
+    assert.equal(
+      block._mbObservedContainerWidth,
+      undefined,
+      "Observed container width must be cleared after flush"
+    );
+    assert.equal(
+      block._mbObservedLiveContainerWidth,
+      undefined,
+      "Observed live container width must be cleared after flush"
+    );
+  } finally {
+    restoreObsidian();
+    delete global.ResizeObserver;
+    delete global.document;
+  }
+});
+
 
 
 
