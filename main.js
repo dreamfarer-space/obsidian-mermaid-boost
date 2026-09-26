@@ -3132,12 +3132,6 @@ var MermaidBoostPlugin = class extends Plugin {
           if (renderedW && Math.abs(entryW - renderedW) <= 2) {
             continue;
           }
-          if (renderedW && (Math.abs(entryW - (renderedW + 28)) <= 2 || Math.abs(entryW - (renderedW + 30)) <= 2)) {
-            continue;
-          }
-          if (renderedW < 240 && (Math.abs(entryW - 210) <= 2 || Math.abs(entryW - 240) <= 2)) {
-            continue;
-          }
           if (lastContainerW && Math.abs(entryW - lastContainerW) <= 2) {
             continue;
           }
