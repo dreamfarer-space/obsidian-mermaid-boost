@@ -1,7 +1,7 @@
 {
   "id": "mermaid-boost",
   "name": "Mermaid Boost",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "minAppVersion": "1.5.0",
   "description": "Smart compact sizing, modern palettes, and interactive controls for Mermaid diagrams.",
   "author": "Mermaid Boost",

@@ -2,6 +2,20 @@
 
 All notable changes to **Mermaid Boost** (`mermaid-boost`) are documented in this file.
 
+## [1.0.5] - 2026-09-26
+
+### Fixed
+- **Infinite Zoom In/Out Oscillation Loop Elimination**:
+  - Eliminated the infinite resizing oscillation cascade caused by `ResizeObserver` observing the `.mermaid-boost-card` container (`fit-content`).
+  - Added live DOM container width comparison (`_mbLastContainerWidth`) and tracked `_mbLastRenderedContentWidth` to discard self-induced resize echoes and card padding/min-width discrepancies.
+  - Symmetrically bounded container resize events between host container (`.markdown-preview-sizer`, `.cm-content`) and parent wrappers to avoid diagram overflow in narrow column layouts.
+  - Cleaned up transient observed container widths during batch flushes so diagrams dynamically expand when panes or windows are widened.
+  - Removed SVG width/height CSS transition animations to prevent intermediate frame resize observer events on initial note opening.
+
+### Added
+- **Resize & Container Resolution Test Suite**:
+  - Expanded unit and integration test suite to 63 passing tests, verifying self-resize loop prevention, narrow diagram clamping, host/parent container conflicts, and user zoom retention.
+
 ## [1.0.4] - 2026-09-26
 
 ### Added

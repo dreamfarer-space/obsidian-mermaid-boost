@@ -6,7 +6,7 @@
 
 <br />
 
-[![Version](https://img.shields.io/badge/release-v1.0.4-7c3aed?style=flat-square)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/releases/tag/1.0.4)
+[![Version](https://img.shields.io/badge/release-v1.0.5-7c3aed?style=flat-square)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/releases/tag/1.0.5)
 [![Obsidian](https://img.shields.io/badge/Obsidian-%3E%3D1.5.0-483699?style=flat-square&logo=obsidian&logoColor=white)](https://obsidian.md)
 [![Themes](https://img.shields.io/badge/themes-29%20in%207%20groups-c6613f?style=flat-square)](#29-themes-across-7-groups)
 [![CI](https://github.com/dreamfarer-space/obsidian-mermaid-boost/actions/workflows/ci.yml/badge.svg)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/actions/workflows/ci.yml)
@@ -141,7 +141,7 @@ Themes restyle the entire SVG hierarchy—**canvas background, primary/secondary
 
 ### Option 1: Install via GitHub Release / BRAT
 
-- **From [GitHub Releases (`v1.0.4`)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/releases/tag/1.0.4)**: Download `mermaid-boost-1.0.4.zip` and extract its files into `<Vault>/.obsidian/plugins/mermaid-boost/`, or download `manifest.json`, `main.js`, and `styles.css` individually and copy them into that folder.
+- **From [GitHub Releases (`v1.0.5`)](https://github.com/dreamfarer-space/obsidian-mermaid-boost/releases/tag/1.0.5)**: Download `mermaid-boost-1.0.5.zip` and extract its files into `<Vault>/.obsidian/plugins/mermaid-boost/`, or download `manifest.json`, `main.js`, and `styles.css` individually and copy them into that folder.
 - **Via [Obsidian BRAT](https://github.com/TfTHacker/obsidian42-brat)**: Add beta plugin repository `dreamfarer-space/obsidian-mermaid-boost` and enable **Mermaid Boost**.
 
 ### Option 2: Manual Installation
@@ -257,7 +257,7 @@ node --check tests/validation.test.js
 | `scripts/build.js` | Fast bundling script using `esbuild` with `--check` and `--watch` support |
 | `scripts/validate-plugin.js` | Metadata schema, release tag, and documentation version consistency validator |
 | `styles.css` | Card containers, toolbar buttons, fullscreen lightbox modal, and theme CSS rules |
-| `manifest.json` | Obsidian plugin manifest metadata (`1.0.4`, `minAppVersion: 1.5.0`) |
+| `manifest.json` | Obsidian plugin manifest metadata (`1.0.5`, `minAppVersion: 1.5.0`) |
 | `assets/` | SVG visual banners and theme showcase graphics used in documentation |
 
 ### Release Process
