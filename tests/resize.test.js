@@ -638,3 +638,180 @@ test("Self-resize loop prevention: ResizeObserver entry matching rendered SVG wi
   }
 });
 
+test("Self-resize loop prevention: compact 202px diagram with 210px content-box does not shrink or loop", async () => {
+  const restoreObsidian = setupObsidianMock();
+  MockResizeObserver.instances = [];
+  global.ResizeObserver = MockResizeObserver;
+
+  try {
+    const { block, svg, host } = createMockMermaidBlock({
+      naturalWidth: 280,
+      naturalHeight: 140,
+      containerWidth: 800,
+    });
+    setupMockDocument([block]);
+
+    const MermaidBoostPlugin = require("../src/main.js");
+    const plugin = new MermaidBoostPlugin({}, {});
+    await plugin.loadSettings();
+
+    plugin.decorateMermaidBlock(block);
+    const initialWidth = parseInt(svg.style.width, 10);
+    assert.equal(initialWidth, 202, `Expected 202px SVG width, got ${initialWidth}`);
+
+    const observer = MockResizeObserver.instances[0];
+    assert.ok(observer);
+
+    // Realistic browser layout: card has min-width: 240px and 28px padding + 2px border,
+    // so ResizeObserver reports contentRect.width = 210px (differing from 202px SVG)
+    observer.trigger([{ target: block, contentRect: { width: 210 } }]);
+
+    // Batch flush must not shrink SVG to 178px
+    plugin.flushResizeBatch();
+    const afterNotificationWidth = parseInt(svg.style.width, 10);
+    assert.equal(
+      afterNotificationWidth,
+      initialWidth,
+      "Diagram SVG width must remain at initial width (202px) and not shrink to 178px"
+    );
+  } finally {
+    restoreObsidian();
+    delete global.ResizeObserver;
+    delete global.document;
+  }
+});
+
+test("Self-resize loop prevention: narrow diagrams with min-width clamp do not trigger infinite resize loop", async () => {
+  const restoreObsidian = setupObsidianMock();
+  MockResizeObserver.instances = [];
+  global.ResizeObserver = MockResizeObserver;
+
+  try {
+    const { block, svg, host } = createMockMermaidBlock({
+      naturalWidth: 120,
+      naturalHeight: 60,
+      containerWidth: 800,
+    });
+    setupMockDocument([block]);
+
+    const MermaidBoostPlugin = require("../src/main.js");
+    const plugin = new MermaidBoostPlugin({}, {});
+    await plugin.loadSettings();
+
+    plugin.decorateMermaidBlock(block);
+    const initialWidth = parseInt(svg.style.width, 10);
+    assert.ok(initialWidth < 200, `Expected narrow diagram, got ${initialWidth}`);
+
+    const observer = MockResizeObserver.instances[0];
+    assert.ok(observer);
+
+    // In CSS, block has min-width: 240px, so contentRect.width is 210px (240 - 28 - 2)
+    observer.trigger([{ target: block, contentRect: { width: 210 } }]);
+
+    // Must not schedule or alter diagram sizing
+    assert.equal(
+      plugin._pendingResizeBlocks ? plugin._pendingResizeBlocks.has(block) : false,
+      false,
+      "Narrow diagram layout echo must not queue a resize batch"
+    );
+    plugin.flushResizeBatch();
+    assert.equal(parseInt(svg.style.width, 10), initialWidth);
+  } finally {
+    restoreObsidian();
+    delete global.ResizeObserver;
+    delete global.document;
+  }
+});
+
+test("Self-resize loop prevention: user zoom in/out remains stable under layout echoes", async () => {
+  const restoreObsidian = setupObsidianMock();
+  MockResizeObserver.instances = [];
+  global.ResizeObserver = MockResizeObserver;
+
+  try {
+    const { block, svg, host } = createMockMermaidBlock({
+      naturalWidth: 600,
+      naturalHeight: 300,
+      containerWidth: 800,
+    });
+    setupMockDocument([block]);
+
+    const MermaidBoostPlugin = require("../src/main.js");
+    const plugin = new MermaidBoostPlugin({}, {});
+    await plugin.loadSettings();
+
+    plugin.decorateMermaidBlock(block);
+    const initialWidth = parseInt(svg.style.width, 10);
+
+    // User zooms in by 1.5x
+    block.dataset.mbZoomFactor = "1.5";
+    plugin.updateDiagramSizing(block);
+    const zoomedWidth = parseInt(svg.style.width, 10);
+    assert.ok(zoomedWidth > initialWidth, "Diagram should be enlarged by user zoom");
+
+    const observer = MockResizeObserver.instances[0];
+    assert.ok(observer);
+
+    // Browser fires ResizeObserver for block clamped by container (contentRect = 770px)
+    observer.trigger([{ target: block, contentRect: { width: 770 } }]);
+    assert.equal(
+      plugin._pendingResizeBlocks ? plugin._pendingResizeBlocks.has(block) : false,
+      false,
+      "User zoom layout echo must not queue a resize batch"
+    );
+    plugin.flushResizeBatch();
+    assert.equal(parseInt(svg.style.width, 10), zoomedWidth);
+  } finally {
+    restoreObsidian();
+    delete global.ResizeObserver;
+    delete global.document;
+  }
+});
+
+test("Container width resolution: window resize expand clears stale observed width and adopts full hostContainer", async () => {
+  const restoreObsidian = setupObsidianMock();
+  MockResizeObserver.instances = [];
+  global.ResizeObserver = MockResizeObserver;
+
+  try {
+    const { block, svg, host } = createMockMermaidBlock({
+      naturalWidth: 1000,
+      naturalHeight: 500,
+      containerWidth: 600,
+    });
+    setupMockDocument([block]);
+
+    const MermaidBoostPlugin = require("../src/main.js");
+    const plugin = new MermaidBoostPlugin({}, {});
+    await plugin.loadSettings();
+
+    plugin.decorateMermaidBlock(block);
+    const initialWidth = parseInt(svg.style.width, 10);
+
+    const observer = MockResizeObserver.instances[0];
+    // Container contracts to 400px
+    host.clientWidth = 400;
+    block.clientWidth = 400;
+    observer.trigger([{ target: host, contentRect: { width: 400 } }]);
+    plugin.flushResizeBatch();
+
+    const contractedWidth = parseInt(svg.style.width, 10);
+    assert.ok(contractedWidth < initialWidth, "Diagram should shrink in 400px container");
+
+    // Later window/workspace expands to 1200px
+    host.clientWidth = 1200;
+    block.clientWidth = 1200;
+    plugin.updateDiagramSizing(block);
+
+    const expandedWidth = parseInt(svg.style.width, 10);
+    assert.ok(
+      expandedWidth > contractedWidth,
+      `Diagram must expand when host expands (expected > ${contractedWidth}, got ${expandedWidth})`
+    );
+  } finally {
+    restoreObsidian();
+    delete global.ResizeObserver;
+    delete global.document;
+  }
+});
+

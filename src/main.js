@@ -229,6 +229,7 @@ class MermaidBoostPlugin extends Plugin {
       delete block._mbEffectiveSettings;
       delete block._mbLastRenderedWidth;
       delete block._mbLastRenderedHeight;
+      delete block._mbLastRenderedContentWidth;
       delete block._mbLastContainerWidth;
       if (block.classList) {
         block.classList.remove(
@@ -837,14 +838,19 @@ class MermaidBoostPlugin extends Plugin {
       (typeof block.closest === "function" &&
         block.closest(".markdown-preview-sizer, .cm-content, .callout-content")) ||
       block.parentElement;
+    const hostWidth = hostContainer && hostContainer.clientWidth;
+    const parentWidth =
+      block.parentElement &&
+      typeof document !== "undefined" &&
+      block.parentElement !== document.body
+        ? block.parentElement.clientWidth
+        : 0;
     const containerWidth =
       explicitContainerWidth ||
       block._mbObservedContainerWidth ||
-      (hostContainer && hostContainer.clientWidth) ||
-      (block.parentElement &&
-        typeof document !== "undefined" &&
-        block.parentElement !== document.body &&
-        block.parentElement.clientWidth) ||
+      (hostWidth > 0 && parentWidth > 0
+        ? Math.min(hostWidth, parentWidth)
+        : hostWidth || parentWidth) ||
       block.clientWidth ||
       640;
 
@@ -887,8 +893,19 @@ class MermaidBoostPlugin extends Plugin {
       svg.style.setProperty("height", targetH, "important");
       svg.style.setProperty("max-width", "none", "important");
     }
+    const computedBlockStyle =
+      typeof getComputedStyle === "function" ? getComputedStyle(block) : null;
+    const renderedContentWidth = computedBlockStyle
+      ? block.clientWidth -
+        (parseFloat(computedBlockStyle.paddingLeft) || 0) -
+        (parseFloat(computedBlockStyle.paddingRight) || 0)
+      : finalWidth;
     block._mbLastRenderedWidth = finalWidth;
     block._mbLastRenderedHeight = finalHeight;
+    block._mbLastRenderedContentWidth =
+      Number.isFinite(renderedContentWidth) && renderedContentWidth > 0
+        ? renderedContentWidth
+        : finalWidth;
     block._mbLastContainerWidth = containerWidth;
     if (block.classList) {
       block.classList.toggle(
@@ -948,6 +965,21 @@ class MermaidBoostPlugin extends Plugin {
         observer.observe(block.parentElement);
       } catch (_e) {}
     }
+    const hostContainer =
+      (typeof block.closest === "function" &&
+        block.closest(".markdown-preview-sizer, .cm-content, .callout-content")) ||
+      block.parentElement;
+    if (
+      hostContainer &&
+      hostContainer !== block.parentElement &&
+      typeof document !== "undefined" &&
+      hostContainer !== document.body &&
+      hostContainer !== document.documentElement
+    ) {
+      try {
+        observer.observe(hostContainer);
+      } catch (_e) {}
+    }
     this._diagramObservers.set(block, observer);
     if (block.dataset) {
       block.dataset.mbObserved = "true";
@@ -979,6 +1011,7 @@ class MermaidBoostPlugin extends Plugin {
     delete block._mbObservedContainerWidth;
     delete block._mbLastRenderedWidth;
     delete block._mbLastRenderedHeight;
+    delete block._mbLastRenderedContentWidth;
     delete block._mbLastContainerWidth;
   }
 
@@ -992,36 +1025,98 @@ class MermaidBoostPlugin extends Plugin {
       this.unobserveDiagram(block);
       return;
     }
+
+    const hostContainer =
+      (typeof block.closest === "function" &&
+        block.closest(".markdown-preview-sizer, .cm-content, .callout-content")) ||
+      block.parentElement;
+
+    const liveContainerW =
+      (hostContainer &&
+        Number.isFinite(hostContainer.clientWidth) &&
+        hostContainer.clientWidth > 0 &&
+        hostContainer.clientWidth) ||
+      (block.parentElement &&
+        typeof document !== "undefined" &&
+        block.parentElement !== document.body &&
+        Number.isFinite(block.parentElement.clientWidth) &&
+        block.parentElement.clientWidth > 0 &&
+        block.parentElement.clientWidth) ||
+      0;
+
+    const lastContainerW = block._mbLastContainerWidth;
+
     let hasMeaningfulResize = false;
     if (entries && Array.isArray(entries)) {
       for (const entry of entries) {
         if (
-          entry &&
-          entry.contentRect &&
-          Number.isFinite(entry.contentRect.width) &&
-          entry.contentRect.width > 0
+          !entry ||
+          !entry.contentRect ||
+          !Number.isFinite(entry.contentRect.width) ||
+          entry.contentRect.width <= 0
         ) {
-          // If this entry is for the diagram block itself, check if its width
-          // matches our own last rendered SVG width. If so, this event was triggered
-          // by our own SVG layout update (not an external resize) and must be ignored
-          // to prevent an infinite resizing loop.
-          if (entry.target === block) {
-            const renderedW = block._mbLastRenderedWidth;
-            if (renderedW && Math.abs(entry.contentRect.width - renderedW) <= 2) {
-              continue;
-            }
-          } else {
-            // For parent/container elements, ignore if width hasn't changed
-            const lastContainerW = block._mbLastContainerWidth;
-            if (lastContainerW && Math.abs(entry.contentRect.width - lastContainerW) <= 2) {
-              continue;
-            }
+          continue;
+        }
+
+        const entryW = entry.contentRect.width;
+
+        if (entry.target === block) {
+          // If the entry is for the diagram block itself:
+          // 1. If we have a live container in the DOM and its width hasn't changed,
+          //    this block resize is an internal layout echo (from our own SVG sizing,
+          //    card padding/min-width, or toolbar) and MUST be ignored to prevent loops.
+          if (
+            liveContainerW > 0 &&
+            lastContainerW &&
+            Math.abs(liveContainerW - lastContainerW) <= 2
+          ) {
+            continue;
           }
-          block._mbObservedContainerWidth = entry.contentRect.width;
+
+          // 2. If the entry matches our last rendered card content width or SVG width, ignore.
+          const renderedContentW = block._mbLastRenderedContentWidth;
+          if (renderedContentW && Math.abs(entryW - renderedContentW) <= 2) {
+            continue;
+          }
+          const renderedW = block._mbLastRenderedWidth;
+          if (renderedW && Math.abs(entryW - renderedW) <= 2) {
+            continue;
+          }
+          if (
+            renderedW &&
+            (Math.abs(entryW - (renderedW + 28)) <= 2 ||
+              Math.abs(entryW - (renderedW + 30)) <= 2)
+          ) {
+            continue;
+          }
+          if (
+            renderedW < 240 &&
+            (Math.abs(entryW - 210) <= 2 || Math.abs(entryW - 240) <= 2)
+          ) {
+            continue;
+          }
+
+          // 3. If container width has not changed compared to lastContainerW, ignore.
+          if (lastContainerW && Math.abs(entryW - lastContainerW) <= 2) {
+            continue;
+          }
+
+          block._mbObservedContainerWidth =
+            liveContainerW > 0 && Math.abs(liveContainerW - lastContainerW) > 2
+              ? Math.min(liveContainerW, entryW)
+              : entryW;
+          hasMeaningfulResize = true;
+        } else {
+          // For container/parent elements: ignore if container width hasn't meaningfully changed
+          if (lastContainerW && Math.abs(entryW - lastContainerW) <= 2) {
+            continue;
+          }
+          block._mbObservedContainerWidth = entryW;
           hasMeaningfulResize = true;
         }
       }
     }
+
     if (!hasMeaningfulResize) return;
     if (!this._pendingResizeBlocks) {
       this._pendingResizeBlocks = new Set();
@@ -1059,6 +1154,9 @@ class MermaidBoostPlugin extends Plugin {
         this.updateDiagramSizing(b);
       } else if (b) {
         this.unobserveDiagram(b);
+      }
+      if (b) {
+        delete b._mbObservedContainerWidth;
       }
     }
   }
