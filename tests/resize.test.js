@@ -845,6 +845,14 @@ test("Container width resolution: parent and host entries with different widths 
 
     const observer = MockResizeObserver.instances[0];
     assert.ok(observer);
+    assert.ok(
+      observer.observed.includes(host),
+      "Observer must observe the distinct host container"
+    );
+    assert.ok(
+      observer.observed.includes(parent),
+      "Observer must observe the parent container"
+    );
 
     // Verify both orderings in a single callback:
     // Case 1: host (wider, 1000px) processed AFTER parent (narrower, 400px)
